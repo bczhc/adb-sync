@@ -1,0 +1,28 @@
+#!/bin/env ruby
+
+args = ARGV
+if args.length == 0
+  puts 'Usage: Command <dest-dir>'
+  exit 1
+end
+
+DEST_DIR = args[0]
+
+STDIN.each_line do |line|
+  line.chomp!
+  scan = line.scan(/^([0-9]+) (.*)$/)[0]
+  fail if scan == nil
+  mtime = scan[0].to_i
+  path = scan[1]
+  fail if mtime == 0 or path == nil
+  dest_file_path = File.join(DEST_DIR, path)
+  unless File.exist?(dest_file_path)
+    puts path
+    next
+  end
+  dest_file_mtime = File.mtime dest_file_path
+  dest_file_mtime = dest_file_mtime.tv_sec * 1_000_000_000 + dest_file_mtime.tv_nsec
+  if dest_file_mtime != mtime
+    puts path
+  end
+end

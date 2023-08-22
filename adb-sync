@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -e
+
+if [ $# -eq 0 ]; then
+  echo 'Usage: Command <adb-src-dir> <dest-dir>'
+  exit 1
+fi
+
+src_dir="$1"
+dest_path="$2"
+parent_path="$(dirname "$src_dir")"
+base_name="$(basename "$src_dir")"
+
+mtime_list_file="$(mktemp)"
+diff_list_file="$(mktemp)"
+
+# debug
+# mtime_list_file=./mtime-list
+# diff_list_file=./diff-list
+
+termux_bin_dir=/data/data/com.termux/files/usr/bin
+
+echo Indexing...
+
+time adb shell run-as com.termux files/usr/bin/bash <<EOF >"$mtime_list_file"
+set -e
+cd "$parent_path"
+"$termux_bin_dir"/fd -HI . "$base_name" | \
+"$termux_bin_dir"/ruby -e 'STDIN.each_line {|line| line=line.chomp; t=File.open(line).mtime; puts("#{t.tv_sec * 1_000_000_000 + t.tv_nsec} #{line}") }'
+EOF
+
+"$(dirname "$0")"/adb-sync-diff "$dest_path" <"$mtime_list_file" |
+  rg '^.*[^/]$' >"$diff_list_file" || true
+
+echo "Diff file count: $(wc -l <"$diff_list_file")"
+
+sending_list_file="$(adb shell mktemp)"
+
+adb push "$diff_list_file" "$sending_list_file"
+
+adb shell run-as com.termux files/usr/bin/bash <<EOF | pigz -d | pv | tar -xv -C "$dest_path"
+cd "$termux_bin_dir"
+./tar -C "$parent_path" -c -H pax --verbatim-files-from -T "$sending_list_file" | ./pigz
+EOF
+
+rm "$mtime_list_file"
+rm "$diff_list_file"
