@@ -19,30 +19,3 @@ diff_list_file="$(mktemp)"
 # mtime_list_file=./mtime-list
 # diff_list_file=./diff-list
 
-termux_bin_dir=/data/data/com.termux/files/usr/bin
-
-echo Indexing...
-
-time adb shell run-as com.termux files/usr/bin/bash <<EOF >"$mtime_list_file"
-set -e
-cd "$parent_path"
-"$termux_bin_dir"/fd -HI . "$base_name" | \
-"$termux_bin_dir"/ruby -e 'STDIN.each_line {|line| line=line.chomp; t=File.open(line).mtime; puts("#{t.tv_sec * 1_000_000_000 + t.tv_nsec} #{line}") }'
-EOF
-
-"$(dirname "$0")"/adb-sync-diff "$dest_path" <"$mtime_list_file" |
-  rg '^.*[^/]$' >"$diff_list_file" || true
-
-echo "Diff file count: $(wc -l <"$diff_list_file")"
-
-sending_list_file="$(adb shell mktemp)"
-
-adb push "$diff_list_file" "$sending_list_file"
-
-adb shell run-as com.termux files/usr/bin/bash <<EOF | pigz -d | pv | tar -xv -C "$dest_path"
-cd "$termux_bin_dir"
-./tar -C "$parent_path" -c -H pax --verbatim-files-from -T "$sending_list_file" | ./pigz
-EOF
-
-rm "$mtime_list_file"
-rm "$diff_list_file"
