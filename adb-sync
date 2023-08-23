@@ -13,8 +13,8 @@ function android_mktemp() {
 
 base_dir="$(dirname "$0")"
 
-android_build_dir="$base_dir"/target/aarch64-linux-android/release
-build_dir="$base_dir"/target/release
+android_build_dir="$base_dir"/target/aarch64-linux-android/debug
+build_dir="$base_dir"/target/debug
 
 src_dir="$1"
 dest_path="$2"
@@ -36,4 +36,8 @@ adb shell "$android_bin_dir/index" "$src_dir" > "$entry_list_file" && echo
 echo 'Generating send list...'
 "$build_dir/diff" "$entry_list_file" "$dest_path" > "$send_list_file" && echo
 echo 'Sending tar-zst...'
-adb shell "$android_bin_dir/send" "$src_dir" < "$send_list_file" | pv | zstd -d | tar -xv -C "$dest_path" && echo 'Done'
+adb shell "$android_bin_dir/send" "$src_dir" < "$send_list_file" \
+  | pv \
+  | zstd -d \
+  | "$build_dir/receive" "$dest_path" && echo Done
+

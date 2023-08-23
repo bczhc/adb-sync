@@ -6,8 +6,8 @@ use std::io::{Read, Seek, Write};
 use std::os::unix::prelude::OsStrExt;
 use std::path::Path;
 use std::time::SystemTime;
-use ::crc::Crc;
 
+use ::crc::Crc;
 /// Stream structure: \[ header length | header | file data | checksum of header and file data \]
 use bincode::{Decode, Encode};
 use byteorder::{WriteBytesExt, LE};
@@ -73,11 +73,12 @@ where
             FileType::RegularFile => {
                 let crc = create_crc();
                 let mut digest = crc.digest();
+                digest.update(&header_data);
+
                 let mut crc_filter = crc::write::CrcFilter::new(&mut digest, &mut self.writer);
-                crc_filter.write_all(&header_data).unwrap();
-                crc_filter.flush()?;
                 let mut file = File::open(file_path)?;
                 io::copy(&mut file, &mut crc_filter)?;
+                crc_filter.flush()?;
                 self.writer.write_u32::<LE>(digest.finalize())?;
             }
             FileType::Directory => {
