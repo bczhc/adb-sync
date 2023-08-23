@@ -6,6 +6,8 @@ use std::time::SystemTime;
 use bincode::config::Configuration;
 use bincode::{Decode, Encode};
 
+pub mod transfer;
+
 #[derive(Encode, Decode)]
 pub struct Entry {
     /// `bincode` doesn't support (de)serializing non-UTF8 `Path`s

@@ -1,9 +1,9 @@
 use std::ffi::OsStr;
-use std::fs::File;
 use std::io::{stdin, stdout};
 use std::os::unix::prelude::OsStrExt;
 use std::path::Path;
 
+use adb_sync::transfer::Stream;
 use adb_sync::{bincode_deserialize_compress, cli_args, enable_backtrace};
 
 fn main() -> anyhow::Result<()> {
@@ -21,8 +21,8 @@ fn main() -> anyhow::Result<()> {
 
     let mut writer = zstd::Encoder::new(stdout(), 1)?;
     writer.multithread(num_cpus::get() as u32)?;
-    let mut archive = tar::Builder::new(&mut writer);
 
+    let mut stream = Stream::new(&mut writer);
     for b in send_list {
         let relative_path = Path::new(OsStr::from_bytes(&b));
         if relative_path.components().count() == 0 {
@@ -30,21 +30,10 @@ fn main() -> anyhow::Result<()> {
         }
         let path = android_dir.join(relative_path);
 
-        let metadata = path.symlink_metadata()?;
-        match metadata.file_type() {
-            a if a.is_file() => {
-                archive.append_file(relative_path, &mut File::open(path)?)?;
-            }
-            a if a.is_dir() => {
-                archive.append_dir(relative_path, ".")?;
-            }
-            _ => {
-                // ignore
-            }
-        }
+        stream.append_file(relative_path, &path)?;
     }
+    drop(stream);
 
-    drop(archive);
     writer.finish()?;
 
     Ok(())

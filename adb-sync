@@ -18,8 +18,6 @@ build_dir="$base_dir"/target/release
 
 src_dir="$1"
 dest_path="$2"
-parent_path="$(dirname "$src_dir")"
-base_name="$(basename "$src_dir")"
 
 entry_list_file="$(mktemp)"
 send_list_file="$(mktemp)"
