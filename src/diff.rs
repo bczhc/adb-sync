@@ -36,7 +36,7 @@ fn main() -> anyhow::Result<()> {
             }
         }
         if send {
-            send_list.push(dest_file.as_os_str().as_bytes().to_vec());
+            send_list.push(path.as_os_str().as_bytes().to_vec());
         }
     }
 

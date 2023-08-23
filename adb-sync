@@ -7,6 +7,10 @@ if [ $# -ne 2 ]; then
   exit 1
 fi
 
+cd /home/bczhc/bin/adb-sync
+./build-rust
+cd -
+
 function android_mktemp() {
     adb shell mktemp "$@"
 }
@@ -31,13 +35,18 @@ adb push "$android_build_dir/send" "$android_bin_dir"
 # entry_list_file=./entry-list
 # send_list_file=./send-list
 
+# Like rsync, if src_dir ends with a slash, use a directory with the same name as src_dir and
+# later the synced files are under it.
+synced_dest="$dest_path"
+echo "$src_dir" | rg '.*[^/]$' >/dev/null && synced_dest="$dest_path/$(basename "$src_dir")" && (mkdir "$synced_dest" 2>/dev/null || true)
+
 echo 'Indexing Android files...'
 adb shell "$android_bin_dir/index" "$src_dir" > "$entry_list_file" && echo
 echo 'Generating send list...'
-"$build_dir/diff" "$entry_list_file" "$dest_path" > "$send_list_file" && echo
+"$build_dir/diff" "$entry_list_file" "$synced_dest" > "$send_list_file" && echo
 echo 'Sending stream...'
 adb shell "$android_bin_dir/send" "$src_dir" < "$send_list_file" \
   | pv \
   | zstd -d \
-  | "$build_dir/receive" "$dest_path" && echo Done
+  | "$build_dir/receive" "$synced_dest" && echo Done
 
