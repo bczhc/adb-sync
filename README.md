@@ -28,7 +28,18 @@ adb-sync
     - armv7-linux-androideabi
     - i686-linux-android
     - x86_64-linux-android
-- Run ./build-rust
+- Run `./build-rust`
+
+## Limitations and Notes
+- Relies on mtimes
+- No multiple files/directories and file exclusion support
+- Empty directories won't be synced
+- Only supports regular files (that's, totally ignores symlink, link, reflink, pipe things etc...)
+
+I've found project https://github.com/google/adb-sync
+and https://github.com/jb2170/better-adb-sync, but their
+sync speed is quite slow; can't fulfill my personal
+requirements :).
 
 ## Script implementation
 
