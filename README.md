@@ -3,7 +3,7 @@ adb-sync
 
 ## Usage
 
-> adb-sync \<adb-src-dir\> \<dest-dir\>
+> adb-sync \<android-dir\> \<dest-dir\>
 
 ## Build
 

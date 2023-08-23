@@ -3,7 +3,7 @@
 set -e
 
 if [ $# -ne 2 ]; then
-  echo 'Usage: Command <adb-src-dir> <dest-dir>'
+  echo 'Usage: Command <android-dir> <dest-dir>'
   exit 1
 fi
 
