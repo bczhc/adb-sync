@@ -5,9 +5,10 @@ use std::io::stdout;
 use std::os::unix::prelude::OsStrExt;
 use std::path::Path;
 
-use adb_sync::{bincode_serialize_compress, cli_args, Entry};
+use adb_sync::{bincode_serialize_compress, cli_args, enable_backtrace, Entry};
 
 fn main() -> anyhow::Result<()> {
+    enable_backtrace();
     let args = cli_args();
     if args.is_empty() {
         println!("Usage: command <android-dir>");

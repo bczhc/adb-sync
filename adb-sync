@@ -2,13 +2,13 @@
 
 set -e
 
-if [ $# -eq 0 ]; then
+if [ $# -ne 2 ]; then
   echo 'Usage: Command <adb-src-dir> <dest-dir>'
   exit 1
 fi
 
 function android_mktemp() {
-    adb shell mktemp
+    adb shell mktemp "$@"
 }
 
 base_dir="$(dirname "$0")"
@@ -22,17 +22,20 @@ parent_path="$(dirname "$src_dir")"
 base_name="$(basename "$src_dir")"
 
 entry_list_file="$(mktemp)"
-diff_list_file="$(mktemp)"
+send_list_file="$(mktemp)"
 
-android_index="$(android_mktemp)"
+android_bin_dir="$(android_mktemp -d)"
 
-adb push "$android_build_dir/index" "$android_index"
+adb push "$android_build_dir/index" "$android_bin_dir"
+adb push "$android_build_dir/send" "$android_bin_dir"
 
 # debug
 # entry_list_file=./entry-list
-# diff_list_file=./diff-list
+# send_list_file=./send-list
 
 echo 'Indexing Android files...'
-adb shell "$android_index" "$src_dir" > "$entry_list_file"
-echo
-"$build_dir/diff" "$entry_list_file" "$dest_path"
+adb shell "$android_bin_dir/index" "$src_dir" > "$entry_list_file" && echo
+echo 'Generating send list...'
+"$build_dir/diff" "$entry_list_file" "$dest_path" > "$send_list_file" && echo
+echo 'Sending tar-zst...'
+adb shell "$android_bin_dir/send" "$src_dir" < "$send_list_file" | pv | zstd -d | tar -xv -C "$dest_path" && echo 'Done'

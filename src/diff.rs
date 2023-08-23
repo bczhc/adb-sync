@@ -1,14 +1,15 @@
 use std::ffi::OsStr;
 use std::fs::File;
-use std::io::{stdin, stdout};
+use std::io::stdout;
 use std::os::unix::prelude::OsStrExt;
 use std::path::Path;
 
 use adb_sync::{
-    bincode_config, bincode_deserialize_compress, bincode_serialize_compress, cli_args, Entry,
+    bincode_deserialize_compress, bincode_serialize_compress, cli_args, enable_backtrace, Entry,
 };
 
 fn main() -> anyhow::Result<()> {
+    enable_backtrace();
     let args = cli_args();
     if args.is_empty() {
         println!("Usage: Command <android-list-file> <dest-dir>");
@@ -35,7 +36,7 @@ fn main() -> anyhow::Result<()> {
             }
         }
         if send {
-            send_list.push(dest_file);
+            send_list.push(dest_file.as_os_str().as_bytes().to_vec());
         }
     }
 

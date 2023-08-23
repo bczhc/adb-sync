@@ -19,5 +19,7 @@ name = "send"
 jwalk = "0.8.1"
 bincode = { version = "2.0.0-rc.3", features = ["bincode_derive", "derive"] }
 anyhow = "1.0.75"
-zstd = "0.12.4"
+zstd = { version = "0.12.4",features = ["zstdmt"] }
 pathdiff = "0.2.1"
+tar = "0.4.40"
+num_cpus = "1.16.0"

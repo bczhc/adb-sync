@@ -1,3 +1,4 @@
+use std::env;
 use std::env::args;
 use std::io::{Read, Write};
 use std::time::SystemTime;
@@ -7,6 +8,7 @@ use bincode::{Decode, Encode};
 
 #[derive(Encode, Decode)]
 pub struct Entry {
+    /// `bincode` doesn't support (de)serializing non-UTF8 `Path`s
     pub path_bytes: Vec<u8>,
     pub modified: SystemTime,
 }
@@ -35,4 +37,8 @@ pub fn bincode_deserialize_compress<R: Read, D: Decode>(mut reader: R) -> anyhow
         &mut decoder,
         bincode_config(),
     )?)
+}
+
+pub fn enable_backtrace() {
+    env::set_var("RUST_BACKTRACE", "1");
 }
