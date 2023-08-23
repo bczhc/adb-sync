@@ -35,7 +35,7 @@ echo 'Indexing Android files...'
 adb shell "$android_bin_dir/index" "$src_dir" > "$entry_list_file" && echo
 echo 'Generating send list...'
 "$build_dir/diff" "$entry_list_file" "$dest_path" > "$send_list_file" && echo
-echo 'Sending tar-zst...'
+echo 'Sending stream...'
 adb shell "$android_bin_dir/send" "$src_dir" < "$send_list_file" \
   | pv \
   | zstd -d \

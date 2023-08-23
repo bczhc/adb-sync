@@ -79,7 +79,8 @@ where
                 let mut file = File::open(file_path)?;
                 io::copy(&mut file, &mut crc_filter)?;
                 crc_filter.flush()?;
-                self.writer.write_u32::<LE>(digest.finalize())?;
+                let checksum = digest.finalize();
+                self.writer.write_u32::<LE>(checksum)?;
             }
             FileType::Directory => {
                 let crc = crc_lib::Crc::<u32>::new(&crc_lib::CRC_32_CKSUM);
