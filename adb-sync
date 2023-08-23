@@ -7,15 +7,32 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
+function android_mktemp() {
+    adb shell mktemp
+}
+
+base_dir="$(dirname "$0")"
+
+android_build_dir="$base_dir"/target/aarch64-linux-android/release
+build_dir="$base_dir"/target/release
+
 src_dir="$1"
 dest_path="$2"
 parent_path="$(dirname "$src_dir")"
 base_name="$(basename "$src_dir")"
 
-mtime_list_file="$(mktemp)"
+entry_list_file="$(mktemp)"
 diff_list_file="$(mktemp)"
 
+android_index="$(android_mktemp)"
+
+adb push "$android_build_dir/index" "$android_index"
+
 # debug
-# mtime_list_file=./mtime-list
+# entry_list_file=./entry-list
 # diff_list_file=./diff-list
 
+echo 'Indexing Android files...'
+adb shell "$android_index" "$src_dir" > "$entry_list_file"
+echo
+"$build_dir/diff" "$entry_list_file" "$dest_path"

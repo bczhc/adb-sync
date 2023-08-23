@@ -3,8 +3,21 @@ name = "adb-sync"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+path = "src/index.rs"
+name = "index"
+
+[[bin]]
+path = "src/diff.rs"
+name = "diff"
+
+[[bin]]
+path = "src/send.rs"
+name = "send"
+
 [dependencies]
 jwalk = "0.8.1"
-bincode = "2.0.0-rc.3"
+bincode = { version = "2.0.0-rc.3", features = ["bincode_derive", "derive"] }
 anyhow = "1.0.75"
 zstd = "0.12.4"
+pathdiff = "0.2.1"

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cargo build -r --bin diff
+cargo build -r --bin index --target aarch64-linux-android
+cargo build -r --bin send --target aarch64-linux-android
