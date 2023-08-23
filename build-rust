@@ -1,6 +1,8 @@
 #!/bin/bash
 
-cargo build --bin diff
-cargo build --bin receive
-cargo build --bin index --target aarch64-linux-android
-cargo build --bin send --target aarch64-linux-android
+flag=-r
+
+cargo build $flag --bin diff
+cargo build $flag --bin receive
+cargo build $flag --bin index --target aarch64-linux-android
+cargo build $flag --bin send --target aarch64-linux-android

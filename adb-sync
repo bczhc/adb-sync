@@ -7,18 +7,15 @@ if [ $# -ne 2 ]; then
   exit 1
 fi
 
-cd /home/bczhc/bin/adb-sync
-./build-rust
-cd -
-
 function android_mktemp() {
     adb shell mktemp "$@"
 }
 
 base_dir="$(dirname "$0")"
 
-android_build_dir="$base_dir"/target/aarch64-linux-android/debug
-build_dir="$base_dir"/target/debug
+run_variant=release
+android_build_dir="$base_dir"/target/aarch64-linux-android/$run_variant
+build_dir="$base_dir"/target/$run_variant
 
 src_dir="$1"
 dest_path="$2"
@@ -30,10 +27,6 @@ android_bin_dir="$(android_mktemp -d)"
 
 adb push "$android_build_dir/index" "$android_bin_dir"
 adb push "$android_build_dir/send" "$android_bin_dir"
-
-# debug
-# entry_list_file=./entry-list
-# send_list_file=./send-list
 
 # Like rsync, if src_dir ends with a slash, use a directory with the same name as src_dir and
 # later the synced files are under it.
