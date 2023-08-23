@@ -1,9 +1,10 @@
 #![feature(try_blocks)]
 
-use std::io;
+use std::fs::FileType;
 use std::io::stdout;
 use std::os::unix::prelude::OsStrExt;
 use std::path::Path;
+use std::{fs, io};
 
 use adb_sync::{bincode_serialize_compress, cli_args, enable_backtrace, Entry};
 
@@ -23,6 +24,10 @@ fn main() -> anyhow::Result<()> {
             eprintln!("Failed to index: {:?}", x);
             continue
         };
+        if entry.file_type.is_dir() {
+            // don't send directories
+            continue;
+        }
         let result: io::Result<Entry> = try {
             let metadata = entry.metadata()?;
             let path = entry.path();

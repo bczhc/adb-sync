@@ -49,6 +49,10 @@ fn main() -> anyhow::Result<()> {
         let dest_path = extract_dir.join(path);
         match header.file_type {
             FileType::RegularFile => {
+                if let Some(parent) = dest_path.parent() {
+                    fs::create_dir_all(parent)?;
+                }
+
                 let mut dest_file = File::options()
                     .create(true)
                     .truncate(true)
