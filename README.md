@@ -25,7 +25,13 @@ adb-sync
   TARGET_AR = "/home/bczhc/bin/AndroidSdk/ndk-ln/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
   ```
 
-- Install Android targets using `rustup`
+- Install Android targets using `rustup`:
+  
+  ```shell
+  rustup target add aarch64-linux-android
+  ```
+  If your Android architecture is not aarch64, choose
+  some others (also change `$android_target` in `./build-rust` correspondingly):
     - aarch64-linux-android
     - armv7-linux-androideabi
     - i686-linux-android
@@ -33,10 +39,10 @@ adb-sync
 - Run `./build-rust`
 
 ## Limitations and Notes
-- Relies on mtimes
+- Relies on `mtime`s
 - No multiple files/directories and file exclusion support
 - Empty directories won't be synced
-- Only supports regular files (that's, totally ignores symlink, pipe etc.; no reflink, link awareness)
+- Only supports regular files (that's, totally ignores symlink, pipe etc.; no reflink or hard link awareness)
 
 I've found project https://github.com/google/adb-sync
 and https://github.com/jb2170/better-adb-sync, but their
