@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -o pipefail
 
 if [ $# -ne 2 ]; then
   echo 'Usage: Command <android-dir> <dest-dir>'
@@ -8,7 +9,17 @@ if [ $# -ne 2 ]; then
 fi
 
 function android_mktemp() {
-    adb shell mktemp "$@"
+  # `mktemp` on some Android devices sucks and won't work well
+  # manually create them with names of UNIX timestamp
+  tmp_dir=/data/local/tmp
+  timestamp="$(python -c 'import time; print(int(time.time() * 1000))')"
+  path=$tmp_dir/$timestamp
+  if [ "$1" == "-d" ]; then
+    adb shell mkdir $path
+  else
+    adb shell touch $path
+  fi
+  echo $path
 }
 
 base_dir="$(dirname "$0")"

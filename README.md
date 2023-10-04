@@ -11,6 +11,8 @@ adb-sync
 
   An example configuration file:
   ```toml
+  # <project>/.cargo/config
+  
   [build]
   #target = "aarch64-linux-android"
   
