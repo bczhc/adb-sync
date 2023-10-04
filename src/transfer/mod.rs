@@ -2,7 +2,7 @@ extern crate crc as crc_lib;
 
 use std::fs::File;
 use std::io;
-use std::io::{Read, Seek, Write};
+use std::io::Write;
 use std::os::unix::prelude::OsStrExt;
 use std::path::Path;
 use std::time::SystemTime;

@@ -1,3 +1,4 @@
+/// Copy & paste from part of my other Rust projects
 extern crate crc as crc_lib;
 
 use crc_lib::{Digest, Width};
@@ -22,12 +23,6 @@ impl<'a, 'b> Write for DigestWriter<'a, 'b, u32> {
     }
 }
 
-impl<'a, 'b> DigestWriter<'a, 'b, u32> {
-    pub fn new(digest: &'a mut Digest<'b, u32>) -> DigestWriter<'a, 'b, u32> {
-        Self { digest }
-    }
-}
-
 impl<'a, 'b> Write for DigestWriter<'a, 'b, u64> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.digest.update(buf);
@@ -36,12 +31,6 @@ impl<'a, 'b> Write for DigestWriter<'a, 'b, u64> {
 
     fn flush(&mut self) -> io::Result<()> {
         Ok(())
-    }
-}
-
-impl<'a, 'b> DigestWriter<'a, 'b, u64> {
-    pub fn new(digest: &'a mut Digest<'b, u64>) -> DigestWriter<'a, 'b, u64> {
-        Self { digest }
     }
 }
 

@@ -3,21 +3,23 @@ name = "adb-sync"
 version = "0.1.0"
 edition = "2021"
 
-[[bin]]
-path = "src/index.rs"
-name = "index"
-
+# -------- Host binaries --------
 [[bin]]
 path = "src/diff.rs"
 name = "diff"
 
 [[bin]]
-path = "src/transfer/send.rs"
-name = "send"
-
-[[bin]]
 path = "src/transfer/receive.rs"
 name = "receive"
+
+# -------- Android binaries --------
+[[bin]]
+path = "src/index.rs"
+name = "index"
+
+[[bin]]
+path = "src/transfer/send.rs"
+name = "send"
 
 [dependencies]
 jwalk = "0.8.1"
