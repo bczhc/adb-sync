@@ -12,6 +12,7 @@ pub mod transfer;
 pub struct Entry {
     /// `bincode` doesn't support (de)serializing non-UTF8 `Path`s
     pub path_bytes: Vec<u8>,
+    pub size: u64,
     pub modified: SystemTime,
 }
 

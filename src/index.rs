@@ -33,6 +33,7 @@ fn main() -> anyhow::Result<()> {
             let relative_path = pathdiff::diff_paths(&path, dir).unwrap();
             Entry {
                 path_bytes: relative_path.as_os_str().as_bytes().to_vec(),
+                size: metadata.len(),
                 modified: metadata.modified()?,
             }
         };

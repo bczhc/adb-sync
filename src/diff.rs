@@ -1,5 +1,6 @@
 use std::ffi::OsStr;
 use std::fs::File;
+use std::io;
 use std::io::stdout;
 use std::os::unix::prelude::OsStrExt;
 use std::path::Path;
@@ -24,18 +25,25 @@ fn main() -> anyhow::Result<()> {
 
     let mut send_list = Vec::new();
     for e in entries {
-        let mut send = false;
         let path = Path::new(OsStr::from_bytes(&e.path_bytes));
         let dest_file = dest_dir.join(path);
-        if !dest_file.exists() {
-            send = true;
-        } else {
-            let modified_time = dest_file.symlink_metadata()?.modified()?;
-            if modified_time != e.modified {
-                send = true;
+        let send: io::Result<bool> = (|| {
+            if !dest_file.exists() {
+                return Ok(true);
             }
-        }
-        if send {
+
+            let metadata = dest_file.symlink_metadata()?;
+            if metadata.len() != e.size {
+                return Ok(true);
+            }
+
+            if metadata.modified()? != e.modified {
+                return Ok(true);
+            }
+
+            Ok(false)
+        })();
+        if send? {
             send_list.push(path.as_os_str().as_bytes().to_vec());
         }
     }
