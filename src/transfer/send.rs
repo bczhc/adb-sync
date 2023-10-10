@@ -21,6 +21,7 @@ fn main() -> anyhow::Result<()> {
 
     let mut writer = zstd::Encoder::new(stdout(), 1)?;
     writer.multithread(num_cpus::get() as u32)?;
+    writer.include_checksum(true)?;
 
     let mut stream = Stream::new(&mut writer);
     for b in send_list {

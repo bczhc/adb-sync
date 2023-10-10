@@ -29,6 +29,8 @@ pub fn bincode_serialize_compress<W: Write, E: Encode>(
     obj: E,
 ) -> anyhow::Result<()> {
     let mut encoder = zstd::Encoder::new(&mut writer, 5)?;
+    encoder.include_checksum(true)?;
+    encoder.multithread(num_cpus::get() as u32)?;
     bincode::encode_into_std_write(obj, &mut encoder, bincode_config())?;
     encoder.finish()?;
     Ok(())
