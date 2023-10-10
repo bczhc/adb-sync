@@ -12,13 +12,14 @@ use byteorder::{ReadBytesExt, LE};
 use filetime::FileTime;
 
 use adb_sync::transfer::{create_crc, FileType, Header};
-use adb_sync::{bincode_config, cli_args};
+use adb_sync::{bincode_config, cli_args, enable_backtrace};
 
 use crate::crc::write::CrcFilter;
 
 mod crc;
 
 fn main() -> anyhow::Result<()> {
+    enable_backtrace();
     let args = cli_args();
     if args.is_empty() {
         println!("Usage: Command <extract-dir>");
