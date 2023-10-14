@@ -28,6 +28,6 @@ anyhow = "1.0.75"
 zstd = { version = "0.12.4",features = ["zstdmt"] }
 pathdiff = "0.2.1"
 num_cpus = "1.16.0"
-byteorder = "1.4.3"
+byteorder = "1.5.0"
 crc = "3.0.1"
 filetime = "0.2.22"
