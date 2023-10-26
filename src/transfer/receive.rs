@@ -49,10 +49,6 @@ fn main() -> anyhow::Result<()> {
 
         if header_length == 0xFFFFFFFF {
             // EOF
-            // there should be no data to read, test it
-            if reader.read_u8().is_ok() {
-                return Err(anyhow!("Unexpected data after EOF mark"));
-            }
             break;
         }
 
