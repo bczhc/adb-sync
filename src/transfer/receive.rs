@@ -48,7 +48,13 @@ fn main() -> anyhow::Result<()> {
 
         let mut header_buf = vec![0_u8; header_length as usize];
         reader.read_exact(&mut header_buf)?;
-        let (header, _): (Header, _) = bincode::decode_from_slice(&header_buf, bincode_config())?;
+        let (header, deser_size): (Header, _) =
+            bincode::decode_from_slice(&header_buf, bincode_config())?;
+        if deser_size != header_length as usize {
+            // the used data for deserialization is not the full given data
+            // that's unexpected
+            panic!("Mismatched header deserialization length");
+        }
         let path = Path::new(OsStr::from_bytes(&header.path));
         let dest_path = extract_dir.join(path);
         match header.file_type {
