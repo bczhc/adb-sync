@@ -24,8 +24,8 @@ name = "send"
 [dependencies]
 jwalk = "0.8.1"
 bincode = { version = "2.0.0-rc.3", features = ["bincode_derive", "derive"] }
-anyhow = "1.0.75"
-zstd = { version = "0.12.4",features = ["zstdmt"] }
+anyhow = { version = "1.0.75", features = ["backtrace"] }
+zstd = { version = "0.12.4", features = ["zstdmt"] }
 pathdiff = "0.2.1"
 num_cpus = "1.16.0"
 byteorder = "1.5.0"
