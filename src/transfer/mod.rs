@@ -43,6 +43,13 @@ where
     }
 }
 
+/// Send stream
+///
+/// - Stream structure:
+///   \[ Record1 | Record2 | ... \]
+///
+/// - Record structure:
+///   \[ HeaderLength (u32) | Header | FileContent | Checksum (u32) \]
 impl<W> Stream<W>
 where
     W: Write,
