@@ -1,9 +1,10 @@
 use std::ffi::OsStr;
-use std::io::{stdin, stdout};
+use std::io;
+use std::io::{stdin, stdout, Write};
 use std::os::unix::prelude::OsStrExt;
 use std::path::Path;
 
-use adb_sync::transfer::Stream;
+use adb_sync::transfer::{write_send_list_to_stream, Stream};
 use adb_sync::{bincode_deserialize_compress, cli_args, enable_backtrace};
 
 fn main() -> anyhow::Result<()> {
@@ -24,15 +25,7 @@ fn main() -> anyhow::Result<()> {
     writer.include_checksum(true)?;
 
     let mut stream = Stream::new(&mut writer);
-    for b in send_list {
-        let relative_path = Path::new(OsStr::from_bytes(&b));
-        if relative_path.components().count() == 0 {
-            continue;
-        }
-        let path = android_dir.join(relative_path);
-
-        stream.append_file(relative_path, &path)?;
-    }
+    write_send_list_to_stream(&mut stream, android_dir, &send_list)?;
     drop(stream);
 
     writer.finish()?;

@@ -1,7 +1,12 @@
-use std::env;
+#![feature(try_blocks)]
+
 use std::env::args;
+use std::ffi::OsStr;
 use std::io::{Read, Write};
+use std::os::unix::prelude::OsStrExt;
+use std::path::Path;
 use std::time::SystemTime;
+use std::{env, io};
 
 use bincode::config::Configuration;
 use bincode::{Decode, Encode};
@@ -58,14 +63,14 @@ pub trait TryReadExact {
     /// or just zero.
     ///
     /// This simulates C function `fread`.
-    fn try_read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<usize>;
+    fn try_read_exact(&mut self, buf: &mut [u8]) -> io::Result<usize>;
 }
 
 impl<R> TryReadExact for R
 where
     R: Read,
 {
-    fn try_read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+    fn try_read_exact(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let mut read = 0_usize;
         loop {
             let result = self.read(&mut buf[read..]);
@@ -85,4 +90,69 @@ where
             }
         }
     }
+}
+
+pub fn index_dir<P: AsRef<Path>>(dir: P) -> io::Result<Vec<Entry>> {
+    let walk_dir = jwalk::WalkDir::new(dir.as_ref()).skip_hidden(false);
+    let mut entries = Vec::new();
+    for x in walk_dir {
+        let Ok(entry) = x else {
+            eprintln!("Failed to index: {:?}", x);
+            continue;
+        };
+        if entry.file_type.is_dir() {
+            // don't send directories
+            continue;
+        }
+        let result: io::Result<Entry> = try {
+            let metadata = entry.metadata()?;
+            let path = entry.path();
+            let relative_path = pathdiff::diff_paths(&path, dir.as_ref()).unwrap();
+            Entry {
+                path_bytes: relative_path.as_os_str().as_bytes().to_vec(),
+                size: metadata.len(),
+                modified: metadata.modified()?,
+            }
+        };
+        match result {
+            Ok(e) => {
+                entries.push(e);
+            }
+            Err(e) => {
+                eprintln!("Error: {:?}", (e, entry));
+            }
+        }
+    }
+    Ok(entries)
+}
+
+pub fn generate_send_list<P: AsRef<Path>>(
+    entries: &[Entry],
+    dest_dir: P,
+) -> io::Result<Vec<Vec<u8>>> {
+    let mut send_list = Vec::new();
+    for e in entries {
+        let path = Path::new(OsStr::from_bytes(&e.path_bytes));
+        let dest_file = dest_dir.as_ref().join(path);
+        let send: io::Result<bool> = (|| {
+            if !dest_file.exists() {
+                return Ok(true);
+            }
+
+            let metadata = dest_file.symlink_metadata()?;
+            if metadata.len() != e.size {
+                return Ok(true);
+            }
+
+            if metadata.modified()? != e.modified {
+                return Ok(true);
+            }
+
+            Ok(false)
+        })();
+        if send? {
+            send_list.push(path.as_os_str().as_bytes().to_vec());
+        }
+    }
+    Ok(send_list)
 }
