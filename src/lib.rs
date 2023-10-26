@@ -47,3 +47,42 @@ pub fn bincode_deserialize_compress<R: Read, D: Decode>(mut reader: R) -> anyhow
 pub fn enable_backtrace() {
     env::set_var("RUST_BACKTRACE", "1");
 }
+
+pub trait TryReadExact {
+    /// Read exact data
+    ///
+    /// This function blocks. It reads exact data, and returns bytes it reads. The return value
+    /// will always be the buffer size until it reaches EOF.
+    ///
+    /// When reaching EOF, the return value will be less than the size of the given buffer,
+    /// or just zero.
+    ///
+    /// This simulates C function `fread`.
+    fn try_read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<usize>;
+}
+
+impl<R> TryReadExact for R
+where
+    R: Read,
+{
+    fn try_read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let mut read = 0_usize;
+        loop {
+            let result = self.read(&mut buf[read..]);
+            match result {
+                Ok(r) => {
+                    if r == 0 {
+                        return Ok(read);
+                    }
+                    read += r;
+                    if read == buf.len() {
+                        return Ok(read);
+                    }
+                }
+                Err(e) => {
+                    return Err(e);
+                }
+            }
+        }
+    }
+}

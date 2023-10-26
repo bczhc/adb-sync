@@ -12,7 +12,7 @@ use byteorder::{ReadBytesExt, LE};
 use filetime::FileTime;
 
 use adb_sync::transfer::{create_crc, FileType, Header};
-use adb_sync::{bincode_config, cli_args, enable_backtrace};
+use adb_sync::{bincode_config, cli_args, enable_backtrace, TryReadExact};
 
 use crate::crc::write::CrcFilter;
 
@@ -30,16 +30,19 @@ fn main() -> anyhow::Result<()> {
 
     let mut reader = stdin().lock();
     loop {
-        let header_length = reader.read_u32::<LE>();
-        let header_length = match header_length {
-            Ok(l) => l,
-            Err(e) => {
-                if e.kind() == io::ErrorKind::UnexpectedEof {
-                    // reach the end
-                    break;
-                } else {
-                    return Err(anyhow!("Read error: {}", e));
-                }
+        let mut header_length_buf = [0_u8; 4];
+        let size = reader.try_read_exact(&mut header_length_buf)?;
+        let header_length = match size {
+            0 => {
+                // reach the end normally
+                break;
+            }
+            4 => {
+                use byteorder::ByteOrder;
+                LE::read_u32(&header_length_buf)
+            }
+            _ => {
+                return Err(anyhow!("Broken stream; only read {} bytes of header", size));
             }
         };
 
