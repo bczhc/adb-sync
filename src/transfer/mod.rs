@@ -8,7 +8,6 @@ use std::path::Path;
 use std::time::SystemTime;
 
 use ::crc::Crc;
-/// Stream structure: \[ header length | header | file data | checksum of header and file data \]
 use bincode::{Decode, Encode};
 use byteorder::{WriteBytesExt, LE};
 
@@ -50,6 +49,8 @@ where
 ///
 /// - Record structure:
 ///   \[ HeaderLength (u32) | Header | FileContent | Checksum (u32) \]
+///   
+///   When `HeaderLength` is 0xFFFFFFFF, it indicates EOF.
 impl<W> Stream<W>
 where
     W: Write,
@@ -99,6 +100,10 @@ where
 
         Ok(())
     }
+    
+    fn write_eof(&mut self) -> io::Result<()> {
+        self.writer.write_u32::<LE>(0xFFFFFFFF)
+    }
 }
 
 pub fn create_crc() -> Crc<u32> {
@@ -107,6 +112,8 @@ pub fn create_crc() -> Crc<u32> {
 
 impl<W: Write> Drop for Stream<W> {
     fn drop(&mut self) {
+        let _ = self.writer.flush();
+        let _ = self.write_eof();
         let _ = self.writer.flush();
     }
 }

@@ -36,8 +36,7 @@ fn main() -> anyhow::Result<()> {
         let size = reader.try_read_exact(&mut header_length_buf)?;
         let header_length = match size {
             0 => {
-                // reach the end normally
-                break;
+                return Err(anyhow!("Unexpected EOF before reaching the EOF mark"));
             }
             4 => {
                 use byteorder::ByteOrder;
@@ -47,6 +46,15 @@ fn main() -> anyhow::Result<()> {
                 return Err(anyhow!("Broken stream; only read {} bytes of header", size));
             }
         };
+
+        if header_length == 0xFFFFFFFF {
+            // EOF
+            // there should be no data to read, test it
+            if reader.read_u8().is_ok() {
+                return Err(anyhow!("Unexpected data after EOF mark"));
+            }
+            break;
+        }
 
         let mut header_buf = vec![0_u8; header_length as usize];
         reader.read_exact(&mut header_buf)?;
