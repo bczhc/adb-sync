@@ -1,3 +1,4 @@
+use bincode::{Decode, Encode};
 use num_derive::{FromPrimitive, ToPrimitive};
 
 #[repr(u8)]
@@ -8,3 +9,8 @@ pub enum Message {
 }
 
 pub const STREAM_MAGIC: &[u8; 11] = b"sync-stream";
+
+#[derive(Encode, Decode)]
+pub struct SendConfigs {
+    pub src_basename: Option<String>,
+}

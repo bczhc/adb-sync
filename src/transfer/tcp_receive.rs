@@ -1,13 +1,13 @@
 use std::io;
 use std::io::{Cursor, Read};
 use std::net::{SocketAddrV4, TcpListener, TcpStream};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::anyhow;
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 
 use adb_sync::transfer::receive;
-use adb_sync::transfer::tcp::{Message, STREAM_MAGIC};
+use adb_sync::transfer::tcp::{Message, SendConfigs, STREAM_MAGIC};
 use adb_sync::{
     bincode_deserialize_compress, bincode_serialize_compress, cli_args, generate_send_list, Entry,
 };
@@ -56,6 +56,15 @@ fn handle_connection<P: AsRef<Path>>(mut socket: TcpStream, dest_dir: P) -> anyh
     let entries: Vec<Entry> = bincode_deserialize_compress(&mut buf.into_inner().as_slice())?;
     send_finish_response!();
 
+    let send_configs_length = socket.read_u32::<LE>()?;
+    let mut buf = Cursor::new(Vec::new());
+    io::copy(
+        &mut Read::by_ref(&mut socket).take(send_configs_length as u64),
+        &mut buf,
+    )?;
+    let send_configs: SendConfigs = bincode_deserialize_compress(&mut buf.into_inner().as_slice())?;
+    send_finish_response!();
+
     let send_list = generate_send_list(&entries, &dest_dir)?;
     let mut buf = Cursor::new(Vec::new());
     bincode_serialize_compress(&mut buf, &send_list)?;
@@ -67,7 +76,13 @@ fn handle_connection<P: AsRef<Path>>(mut socket: TcpStream, dest_dir: P) -> anyh
         Err(anyhow!("Unexpected message: {}", message_u8))?;
     }
 
-    receive(&mut socket, &dest_dir)?;
+    let sync_dest_dir = if let Some(b) = send_configs.src_basename {
+        dest_dir.as_ref().join(b)
+    } else {
+        dest_dir.as_ref().to_path_buf()
+    };
+
+    receive(&mut socket, &sync_dest_dir)?;
 
     send_finish_response!();
 
