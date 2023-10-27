@@ -1,7 +1,7 @@
 use std::io;
 use std::io::{Cursor, Read};
 use std::net::{SocketAddrV4, TcpListener, TcpStream};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use anyhow::anyhow;
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
@@ -65,7 +65,13 @@ fn handle_connection<P: AsRef<Path>>(mut socket: TcpStream, dest_dir: P) -> anyh
     let send_configs: SendConfigs = bincode_deserialize_compress(&mut buf.into_inner().as_slice())?;
     send_finish_response!();
 
-    let send_list = generate_send_list(&entries, &dest_dir)?;
+    let sync_dest_dir = if let Some(b) = send_configs.src_basename {
+        dest_dir.as_ref().join(b)
+    } else {
+        dest_dir.as_ref().to_path_buf()
+    };
+
+    let send_list = generate_send_list(&entries, &sync_dest_dir)?;
     let mut buf = Cursor::new(Vec::new());
     bincode_serialize_compress(&mut buf, &send_list)?;
     socket.write_u32::<LE>(buf.get_ref().len() as u32)?;
@@ -75,12 +81,6 @@ fn handle_connection<P: AsRef<Path>>(mut socket: TcpStream, dest_dir: P) -> anyh
     if message_u8 != Message::Finish as u8 {
         Err(anyhow!("Unexpected message: {}", message_u8))?;
     }
-
-    let sync_dest_dir = if let Some(b) = send_configs.src_basename {
-        dest_dir.as_ref().join(b)
-    } else {
-        dest_dir.as_ref().to_path_buf()
-    };
 
     receive(&mut socket, &sync_dest_dir)?;
 
