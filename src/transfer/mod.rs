@@ -133,16 +133,16 @@ pub fn write_send_list_to_stream<P, W, F>(
 where
     P: AsRef<Path>,
     W: Write,
-    F: FnMut(&Path),
+    F: FnMut(&Path, (usize /* index */, usize /* total */)),
 {
-    for b in send_list {
+    for (index, b) in send_list.iter().enumerate() {
         let relative_path = Path::new(OsStr::from_bytes(b));
         if relative_path.components().count() == 0 {
             continue;
         }
         let path = android_dir.as_ref().join(relative_path);
 
-        callback(relative_path);
+        callback(relative_path, (index, send_list.len()));
         stream.append_file(relative_path, &path)?;
     }
     Ok(())

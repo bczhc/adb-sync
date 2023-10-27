@@ -25,7 +25,7 @@ fn main() -> anyhow::Result<()> {
     writer.include_checksum(true)?;
 
     let mut stream = Stream::new(&mut writer);
-    write_send_list_to_stream(&mut stream, android_dir, &send_list, |_| {})?;
+    write_send_list_to_stream(&mut stream, android_dir, &send_list, |_, _| {})?;
     drop(stream);
 
     writer.finish()?;
