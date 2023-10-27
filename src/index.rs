@@ -14,7 +14,7 @@ fn main() -> anyhow::Result<()> {
     }
     let dir = Path::new(&args[0]);
 
-    let entries = index_dir(dir)?;
+    let entries = index_dir(dir, true)?;
     eprintln!("Total entries: {}", entries.len());
 
     let mut stdout = stdout().lock();

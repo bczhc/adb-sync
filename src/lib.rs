@@ -92,13 +92,17 @@ where
     }
 }
 
-pub fn index_dir<P: AsRef<Path>>(dir: P) -> io::Result<Vec<Entry>> {
+pub fn index_dir<P: AsRef<Path>>(dir: P, skip_failed: bool) -> io::Result<Vec<Entry>> {
     let walk_dir = jwalk::WalkDir::new(dir.as_ref()).skip_hidden(false);
     let mut entries = Vec::new();
     for x in walk_dir {
         let Ok(entry) = x else {
-            eprintln!("Failed to index: {:?}", x);
-            continue;
+            if skip_failed {
+                eprintln!("Failed to index: {:?}", x);
+                continue;
+            } else {
+                return Err(io::Error::from(x.err().unwrap()));
+            }
         };
         if entry.file_type.is_dir() {
             // don't send directories
