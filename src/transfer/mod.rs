@@ -124,14 +124,16 @@ impl<W: Write> Drop for Stream<W> {
     }
 }
 
-pub fn write_send_list_to_stream<P, W>(
+pub fn write_send_list_to_stream<P, W, F>(
     stream: &mut Stream<W>,
     android_dir: P,
     send_list: &[Vec<u8>],
+    mut callback: F,
 ) -> io::Result<()>
 where
     P: AsRef<Path>,
     W: Write,
+    F: FnMut(&Path),
 {
     for b in send_list {
         let relative_path = Path::new(OsStr::from_bytes(b));
@@ -140,6 +142,7 @@ where
         }
         let path = android_dir.as_ref().join(relative_path);
 
+        callback(relative_path);
         stream.append_file(relative_path, &path)?;
     }
     Ok(())

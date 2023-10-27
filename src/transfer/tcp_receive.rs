@@ -24,7 +24,8 @@ fn main() -> anyhow::Result<()> {
 
     let listener = TcpListener::bind(SocketAddrV4::new("0.0.0.0".parse().unwrap(), port))?;
     loop {
-        let (socket, _) = listener.accept()?;
+        let (socket, addr) = listener.accept()?;
+        println!("Connected: {}", addr);
         let result = handle_connection(socket, dest_dir);
         if let Err(e) = result {
             eprintln!("Err: {}", e);
@@ -69,6 +70,10 @@ fn handle_connection<P: AsRef<Path>>(mut socket: TcpStream, dest_dir: P) -> anyh
     receive(&mut socket, &dest_dir)?;
 
     send_finish_response!();
+
+    drop(socket);
+
+    println!("Done!");
 
     Ok(())
 }
