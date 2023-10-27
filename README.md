@@ -52,3 +52,5 @@ requirements :).
 ## Script implementation
 
 For the initial script implementation, see [`script-impl`](https://github.com/bczhc/adb-sync/tree/script-impl) branch.
+
+*For syncing over network, see https://github.com/bczhc/FileSync*
