@@ -38,7 +38,10 @@ fn handle_connection<P: AsRef<Path>>(mut socket: TcpStream, dest_dir: P) -> anyh
     socket.read_exact(&mut magic_buf)?;
 
     if &magic_buf != STREAM_MAGIC {
-        Err(anyhow!("Bad magic number: {:x?}", magic_buf))?;
+        Err(anyhow!(
+            "Bad magic number: {}",
+            String::from_utf8_lossy(&magic_buf)
+        ))?;
     }
     macro_rules! send_finish_response {
         () => {
