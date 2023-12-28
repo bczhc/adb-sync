@@ -1,28 +1,38 @@
 use std::io;
 use std::io::{Cursor, Read};
-use std::net::{SocketAddrV4, TcpListener, TcpStream};
+use std::net::{SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
 use std::path::Path;
 
 use anyhow::anyhow;
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
+use clap::builder::TypedValueParser;
+use clap::Parser;
 
 use adb_sync::transfer::receive;
 use adb_sync::transfer::tcp::{Message, SendConfigs, STREAM_MAGIC};
 use adb_sync::{
-    bincode_deserialize_compress, bincode_serialize_compress, cli_args, generate_send_list, Entry,
+    bincode_deserialize_compress, bincode_serialize_compress, generate_send_list, Entry,
 };
 
+use crate::cli::Args;
+
+mod cli;
+
 fn main() -> anyhow::Result<()> {
-    let args = cli_args();
-    if args.is_empty() {
-        println!("Usage: cmd <bind-port> <dest-dir>");
-        return Ok(());
-    }
+    let args = Args::parse();
+    let bind_socket_addr = match args.bind_socket_addr.parse::<u16>() {
+        Ok(p) => format!("0.0.0.0:{p}").parse::<SocketAddr>().unwrap(),
+        Err(_) => args
+            .bind_socket_addr
+            .to_socket_addrs()?
+            .next()
+            .ok_or(anyhow!("Invalid socket address"))?,
+    };
 
-    let port = args[0].parse::<u16>()?;
-    let dest_dir = &args[1];
+    let dest_dir = &args.dest_dir;
 
-    let listener = TcpListener::bind(SocketAddrV4::new("0.0.0.0".parse().unwrap(), port))?;
+    let listener = TcpListener::bind(bind_socket_addr)?;
+    println!("Listening on {}", bind_socket_addr);
     loop {
         let (socket, addr) = listener.accept()?;
         println!("Connected: {}", addr);

@@ -22,7 +22,7 @@ path = "src/transfer/send.rs"
 name = "send"
 
 [[bin]]
-path = "src/transfer/tcp_receive.rs"
+path = "src/transfer/tcp_receive/mod.rs"
 name = "tcp-receive"
 
 [dependencies]
@@ -37,3 +37,4 @@ crc = "3.0.1"
 filetime = "0.2.22"
 num-traits = "0.2.17"
 num-derive = "0.4.1"
+clap = { version = "4.4.8", features = ["derive"] }
