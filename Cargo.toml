@@ -3,12 +3,8 @@ name = "adb-sync"
 version = "0.1.0"
 edition = "2021"
 
-# -------- Host binaries --------
-
-# -------- Android binaries --------
-[[bin]]
-name = "android"
-path = "src/cli/tcp/android.rs"
+[workspace]
+members = ["cli"]
 
 [dependencies]
 jwalk = "0.8.1"
@@ -22,6 +18,5 @@ crc = "3.0.1"
 filetime = "0.2.22"
 num-traits = "0.2.17"
 num-derive = "0.4.1"
-clap = { version = "4.4.8", features = ["derive"] }
 readwrite = "0.2.0"
 cfg-if = "1.0.0"

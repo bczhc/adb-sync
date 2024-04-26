@@ -14,9 +14,6 @@ pub fn start<S: Read + Write>(
     send_config: SendConfig,
     dest_dir: &Path,
 ) -> anyhow::Result<()> {
-    stream.write_all(MAGIC)?;
-    stream.write_bincode(&Message::StartIndexing(send_config))?;
-
     macro_rules! check_ok {
         () => {
             if (stream.read_bincode::<Message>()? != Message::Ok) {
@@ -25,16 +22,20 @@ pub fn start<S: Read + Write>(
         };
     }
 
+    stream.write_all(MAGIC)?;
+    stream.write_bincode(&Message::StartIndexing(send_config))?;
     check_ok!();
+
     let entries = bincode_deserialize_compress::<_, Vec<Entry>>(&mut stream)?;
     println!("Entries: {}", entries.len());
+    check_ok!();
 
     let send_list = generate_send_list(&entries, dest_dir)?;
+    println!("Send list: {}", send_list.len());
     bincode_serialize_compress(&mut stream, &send_list)?;
     check_ok!();
 
     receive(&mut stream, dest_dir)?;
-
     check_ok!();
     println!("Done!");
 

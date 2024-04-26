@@ -6,8 +6,9 @@ use std::path::PathBuf;
 /// TODO
 
 #[derive(Encode, Decode, Debug, PartialEq, Eq)]
+#[repr(u8)]
 pub enum Message {
-    Ok,
+    Ok = 1,
     StartIndexing(SendConfig),
 }
 

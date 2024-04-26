@@ -4,12 +4,19 @@ use bincode::error::{DecodeError, EncodeError};
 use bincode::{BorrowDecode, Decode, Encode};
 use cfg_if::cfg_if;
 use std::ffi::OsStr;
+use std::fmt::{Display, Formatter};
 use std::os;
 /// `bincode` doesn't support (de)serializing non-UTF-8 `PathBuf`s
 use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct UnixPath(pub PathBuf);
+
+impl Display for UnixPath {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.display())
+    }
+}
 
 impl<P: Into<PathBuf>> From<P> for UnixPath {
     fn from(value: P) -> Self {

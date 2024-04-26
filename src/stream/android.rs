@@ -40,7 +40,6 @@ pub fn handle_connection<S: Read + Write>(mut stream: S) -> anyhow::Result<()> {
     let mut send_stream = SendStream::new(&mut stream);
     write_send_list_to_stream(&mut send_stream, &send_config.path, &send_list, |_, _| {})?;
     drop(send_stream);
-
     send_ok!();
 
     Ok(())

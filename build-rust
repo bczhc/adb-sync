@@ -3,9 +3,9 @@
 flag=-r
 android_target=aarch64-linux-android
 
-cargo build $flag --bin diff
-cargo build $flag --bin receive
+cargo build $flag --workspace --bin tcp-host
+
 # Strip Android binaries to reduce size
 # Cargo doesn't support per-target profiles yet: https://github.com/rust-lang/cargo/issues/4897
-RUSTFLAGS="-C link-arg=-s" cargo build $flag --bin index --target $android_target
-RUSTFLAGS="-C link-arg=-s" cargo build $flag --bin send --target $android_target
+RUSTFLAGS="-C link-arg=-s" cargo build $flag --workspace --bin tcp-android --target $android_target
+adb push target/aarch64-linux-android/release/tcp-android /data/local/tmp
