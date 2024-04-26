@@ -9,6 +9,7 @@ dependencies = [
  "anyhow",
  "bincode",
  "byteorder",
+ "cfg-if",
  "clap",
  "crc",
  "filetime",
@@ -17,6 +18,7 @@ dependencies = [
  "num-traits",
  "num_cpus",
  "pathdiff",
+ "readwrite",
  "zstd",
 ]
 
@@ -461,6 +463,12 @@ dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
 ]
+
+[[package]]
+name = "readwrite"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31ffdc83f7ce1e84943f94033a48a1a50ef9581aaa5d213625dea98e60f9ed54"
 
 [[package]]
 name = "redox_syscall"

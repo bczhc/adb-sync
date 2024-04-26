@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# TODO!!
+
+exit 1
+
 set -e
 set -o pipefail
 

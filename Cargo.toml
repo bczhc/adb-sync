@@ -4,26 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 # -------- Host binaries --------
-[[bin]]
-path = "src/diff.rs"
-name = "diff"
-
-[[bin]]
-path = "src/transfer/receive.rs"
-name = "receive"
 
 # -------- Android binaries --------
-[[bin]]
-path = "src/index.rs"
-name = "index"
-
-[[bin]]
-path = "src/transfer/send.rs"
-name = "send"
-
-[[bin]]
-path = "src/transfer/tcp_receive/mod.rs"
-name = "tcp-receive"
 
 [dependencies]
 jwalk = "0.8.1"
@@ -38,3 +20,5 @@ filetime = "0.2.22"
 num-traits = "0.2.17"
 num-derive = "0.4.1"
 clap = { version = "4.4.8", features = ["derive"] }
+readwrite = "0.2.0"
+cfg-if = "1.0.0"

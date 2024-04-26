@@ -1,29 +1,23 @@
-extern crate crc as crc_lib;
-
-use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{Read, Write};
-use std::os::unix::prelude::OsStrExt;
 use std::path::Path;
 use std::time::SystemTime;
 use std::{fs, io};
 
-use ::crc::Crc;
+use ::crc as crc_lib;
 use anyhow::anyhow;
 use bincode::{Decode, Encode};
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 use filetime::FileTime;
 
-use crate::transfer::crc::write::CrcFilter;
+use crate::crc;
+use crate::crc::write::CrcFilter;
+use crate::unix_path::UnixPath;
 use crate::{bincode_config, TryReadExact};
-
-pub mod tcp;
-
-mod crc;
 
 #[derive(Encode, Decode)]
 pub struct Header {
-    pub path: Vec<u8>,
+    pub path: UnixPath,
     pub file_type: FileType,
     pub mtime: SystemTime,
     pub file_size: u64,
@@ -35,11 +29,11 @@ pub enum FileType {
     Directory,
 }
 
-pub struct Stream<W: Write> {
+pub struct SendStream<W: Write> {
     writer: W,
 }
 
-impl<W> Stream<W>
+impl<W> SendStream<W>
 where
     W: Write,
 {
@@ -55,9 +49,9 @@ where
 ///
 /// - Record structure:
 ///   \[ HeaderLength (u32) | Header | FileContent | Checksum (u32) \]
-///   
+///
 ///   When `HeaderLength` is 0xFFFFFFFF, it indicates EOF.
-impl<W> Stream<W>
+impl<W> SendStream<W>
 where
     W: Write,
 {
@@ -76,7 +70,7 @@ where
         let header = Header {
             file_type,
             mtime: metadata.modified()?,
-            path: header_path.as_os_str().as_bytes().to_vec(),
+            path: header_path.into(),
             file_size,
         };
         let header_data = bincode::encode_to_vec(header, bincode_config()).unwrap();
@@ -112,11 +106,11 @@ where
     }
 }
 
-pub fn create_crc() -> Crc<u32> {
+pub fn create_crc() -> crc_lib::Crc<u32> {
     crc_lib::Crc::<u32>::new(&crc_lib::CRC_32_CKSUM)
 }
 
-impl<W: Write> Drop for Stream<W> {
+impl<W: Write> Drop for SendStream<W> {
     fn drop(&mut self) {
         let _ = self.writer.flush();
         let _ = self.write_eof();
@@ -125,9 +119,9 @@ impl<W: Write> Drop for Stream<W> {
 }
 
 pub fn write_send_list_to_stream<P, W, F>(
-    stream: &mut Stream<W>,
+    stream: &mut SendStream<W>,
     android_dir: P,
-    send_list: &[Vec<u8>],
+    send_list: &[UnixPath],
     mut callback: F,
 ) -> io::Result<()>
 where
@@ -136,7 +130,7 @@ where
     F: FnMut(&Path, (usize /* index */, usize /* total */)),
 {
     for (index, b) in send_list.iter().enumerate() {
-        let relative_path = Path::new(OsStr::from_bytes(b));
+        let relative_path = b.0.as_path();
         if relative_path.components().count() == 0 {
             continue;
         }
@@ -184,7 +178,7 @@ where
             panic!("Mismatched header deserialization length");
         }
 
-        let header_path = Path::new(OsStr::from_bytes(&header.path));
+        let header_path = header.path.0.as_path();
         let dest_path = &dest_dir.as_ref().join(header_path);
         let send_result: anyhow::Result<()> = try {
             match header.file_type {

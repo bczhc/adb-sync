@@ -1,9 +1,7 @@
 #![feature(try_blocks)]
 
 use std::env::args;
-use std::ffi::OsStr;
 use std::io::{Read, Write};
-use std::os::unix::prelude::OsStrExt;
 use std::path::Path;
 use std::time::SystemTime;
 use std::{env, io};
@@ -11,12 +9,15 @@ use std::{env, io};
 use bincode::config::Configuration;
 use bincode::{Decode, Encode};
 
-pub mod transfer;
+use crate::unix_path::UnixPath;
+
+pub mod crc;
+mod send_stream;
+pub mod unix_path;
 
 #[derive(Encode, Decode)]
 pub struct Entry {
-    /// `bincode` doesn't support (de)serializing non-UTF8 `Path`s
-    pub path_bytes: Vec<u8>,
+    pub path: UnixPath,
     pub size: u64,
     pub modified: SystemTime,
 }
@@ -113,7 +114,7 @@ pub fn index_dir<P: AsRef<Path>>(dir: P, skip_failed: bool) -> io::Result<Vec<En
             let path = entry.path();
             let relative_path = pathdiff::diff_paths(&path, dir.as_ref()).unwrap();
             Entry {
-                path_bytes: relative_path.as_os_str().as_bytes().to_vec(),
+                path: relative_path.into(),
                 size: metadata.len(),
                 modified: metadata.modified()?,
             }
@@ -133,10 +134,10 @@ pub fn index_dir<P: AsRef<Path>>(dir: P, skip_failed: bool) -> io::Result<Vec<En
 pub fn generate_send_list<P: AsRef<Path>>(
     entries: &[Entry],
     dest_dir: P,
-) -> io::Result<Vec<Vec<u8>>> {
+) -> io::Result<Vec<UnixPath>> {
     let mut send_list = Vec::new();
     for e in entries {
-        let path = Path::new(OsStr::from_bytes(&e.path_bytes));
+        let path = &e.path.0;
         let dest_file = dest_dir.as_ref().join(path);
         let send: io::Result<bool> = (|| {
             if !dest_file.exists() {
@@ -155,7 +156,7 @@ pub fn generate_send_list<P: AsRef<Path>>(
             Ok(false)
         })();
         if send? {
-            send_list.push(path.as_os_str().as_bytes().to_vec());
+            send_list.push(path.into())
         }
     }
     Ok(send_list)
