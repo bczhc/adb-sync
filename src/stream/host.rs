@@ -7,7 +7,7 @@ use anyhow::anyhow;
 use crate::send_stream::receive;
 use crate::stream::protocol::{Message, SendConfig, MAGIC};
 use crate::stream::{ReadBincode, WriteBincode};
-use crate::{bincode_deserialize_compress, bincode_serialize_compress, generate_send_list, Entry};
+use crate::{generate_send_list, Entry};
 
 pub fn start<S: Read + Write>(
     mut stream: S,
@@ -26,13 +26,13 @@ pub fn start<S: Read + Write>(
     stream.write_bincode(&Message::StartIndexing(send_config))?;
     check_ok!();
 
-    let entries = bincode_deserialize_compress::<_, Vec<Entry>>(&mut stream)?;
+    let entries = stream.read_bincode::<Vec<Entry>>()?;
     println!("Entries: {}", entries.len());
     check_ok!();
 
     let send_list = generate_send_list(&entries, dest_dir)?;
     println!("Send list: {}", send_list.len());
-    bincode_serialize_compress(&mut stream, &send_list)?;
+    stream.write_bincode(&send_list)?;
     check_ok!();
 
     receive(&mut stream, dest_dir)?;

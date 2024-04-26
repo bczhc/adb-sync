@@ -2,11 +2,11 @@ use std::io::{Read, Write};
 
 use anyhow::anyhow;
 
+use crate::index_dir;
 use crate::send_stream::{write_send_list_to_stream, SendStream};
 use crate::stream::protocol::{Message, SendConfig, MAGIC};
 use crate::stream::{ReadBincode, WriteBincode};
 use crate::unix_path::UnixPath;
-use crate::{bincode_deserialize_compress, bincode_serialize_compress, index_dir};
 
 pub fn handle_connection<S: Read + Write>(mut stream: S) -> anyhow::Result<()> {
     let mut magic_buf = [0_u8; MAGIC.len()];
@@ -31,10 +31,10 @@ pub fn handle_connection<S: Read + Write>(mut stream: S) -> anyhow::Result<()> {
     send_ok!();
 
     let entries = index_dir(&send_config.path, true)?;
-    bincode_serialize_compress(&mut stream, &entries)?;
+    stream.write_bincode(&entries)?;
     send_ok!();
 
-    let send_list: Vec<UnixPath> = bincode_deserialize_compress(&mut stream)?;
+    let send_list: Vec<UnixPath> = stream.read_bincode()?;
     send_ok!();
 
     let mut send_stream = SendStream::new(&mut stream);
