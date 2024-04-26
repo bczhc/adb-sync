@@ -13,6 +13,7 @@ use crate::unix_path::UnixPath;
 
 pub mod crc;
 mod send_stream;
+pub mod stream;
 pub mod unix_path;
 
 #[derive(Encode, Decode)]

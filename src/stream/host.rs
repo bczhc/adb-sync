@@ -4,9 +4,9 @@ use std::path::Path;
 
 use anyhow::anyhow;
 
-use crate::transfer::receive;
-use crate::transfer::stream::protocol::{Message, SendConfig, MAGIC};
-use crate::transfer::stream::{ReadBincode, WriteBincode};
+use crate::send_stream::receive;
+use crate::stream::protocol::{Message, SendConfig, MAGIC};
+use crate::stream::{ReadBincode, WriteBincode};
 use crate::{bincode_deserialize_compress, bincode_serialize_compress, generate_send_list, Entry};
 
 pub fn start<S: Read + Write>(

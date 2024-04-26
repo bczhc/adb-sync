@@ -2,9 +2,9 @@ use std::io::{Read, Write};
 
 use anyhow::anyhow;
 
-use crate::transfer::stream::protocol::{Message, SendConfig, MAGIC};
-use crate::transfer::stream::{ReadBincode, WriteBincode};
-use crate::transfer::{write_send_list_to_stream, SendStream};
+use crate::send_stream::{write_send_list_to_stream, SendStream};
+use crate::stream::protocol::{Message, SendConfig, MAGIC};
+use crate::stream::{ReadBincode, WriteBincode};
 use crate::unix_path::UnixPath;
 use crate::{bincode_deserialize_compress, bincode_serialize_compress, index_dir};
 

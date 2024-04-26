@@ -6,9 +6,9 @@ use readwrite::ReadWrite;
 
 use crate::bincode_config;
 
-mod android;
-mod host;
-mod protocol;
+pub mod android;
+pub mod host;
+pub mod protocol;
 
 // By default, consoles use line-buffering
 // so after each `write` call we use `flush()`.

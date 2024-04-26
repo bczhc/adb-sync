@@ -6,6 +6,9 @@ edition = "2021"
 # -------- Host binaries --------
 
 # -------- Android binaries --------
+[[bin]]
+name = "android"
+path = "src/cli/tcp/android.rs"
 
 [dependencies]
 jwalk = "0.8.1"
