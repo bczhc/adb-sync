@@ -180,6 +180,7 @@ where
 
         let header_path = header.path.0.as_path();
         let dest_path = &dest_dir.as_ref().join(header_path);
+        println!("{}", dest_path.display());
         let send_result: anyhow::Result<()> = try {
             match header.file_type {
                 FileType::RegularFile => {
@@ -223,7 +224,6 @@ where
                 }
             }
             filetime::set_file_mtime(dest_path, FileTime::from(header.mtime))?;
-            println!("{}", dest_path.display());
         };
         if let Err(e) = send_result {
             // delete the just-failed file/directory and exit
