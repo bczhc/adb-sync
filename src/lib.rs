@@ -113,9 +113,9 @@ pub fn index_dir<P: AsRef<Path>>(dir: P, skip_failed: bool) -> io::Result<Vec<En
 }
 
 pub fn generate_send_list<P: AsRef<Path>>(
-    entries: &[Entry],
+    entries: Vec<Entry>,
     dest_dir: P,
-) -> io::Result<Vec<UnixPath>> {
+) -> io::Result<Vec<Entry>> {
     let mut send_list = Vec::new();
     for e in entries {
         let path = &e.path.0;
@@ -137,7 +137,7 @@ pub fn generate_send_list<P: AsRef<Path>>(
             Ok(false)
         })();
         if send? {
-            send_list.push(path.into())
+            send_list.push(e)
         }
     }
     Ok(send_list)

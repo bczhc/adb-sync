@@ -33,11 +33,11 @@ impl<R: Read, W: Write> Write for ReadWriteFlush<R, W> {
 }
 
 pub trait WriteBincode<W: Write> {
-    fn write_bincode<E: Encode>(&mut self, obj: &E) -> Result<usize, bincode::error::EncodeError>;
+    fn write_bincode<E: Encode>(&mut self, obj: E) -> Result<usize, bincode::error::EncodeError>;
 }
 
 impl<W: Write> WriteBincode<W> for W {
-    fn write_bincode<E: Encode>(&mut self, obj: &E) -> Result<usize, bincode::error::EncodeError> {
+    fn write_bincode<E: Encode>(&mut self, obj: E) -> Result<usize, bincode::error::EncodeError> {
         bincode::encode_into_std_write(obj, self, bincode_config())
     }
 }

@@ -3,6 +3,7 @@ use std::io::Write;
 use std::path::Path;
 
 use anyhow::anyhow;
+use bytesize::ByteSize;
 
 use crate::send_stream::receive;
 use crate::stream::protocol::{Message, SendConfig, MAGIC};
@@ -27,11 +28,19 @@ pub fn start<S: Read + Write>(
     check_ok!();
 
     let entries = stream.read_bincode::<Vec<Entry>>()?;
-    println!("Entries: {}", entries.len());
+    println!(
+        "Entries: {}, {}",
+        entries.len(),
+        ByteSize(entries.iter().map(|x| x.size).sum::<u64>()).to_string_as(true)
+    );
     check_ok!();
 
-    let send_list = generate_send_list(&entries, dest_dir)?;
-    println!("Send list: {}", send_list.len());
+    let send_list = generate_send_list(entries, dest_dir)?;
+    println!(
+        "Send list: {}, {}",
+        send_list.len(),
+        ByteSize(send_list.iter().map(|x| x.size).sum::<u64>()).to_string_as(true)
+    );
     stream.write_bincode(&send_list)?;
     check_ok!();
 

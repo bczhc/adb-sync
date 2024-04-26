@@ -10,7 +10,6 @@ members = ["cli"]
 jwalk = "0.8.1"
 bincode = { version = "2.0.0-rc.3", features = ["bincode_derive", "derive"] }
 anyhow = { version = "1.0.75", features = ["backtrace"] }
-zstd = { version = "0.12.4", features = ["zstdmt"] }
 pathdiff = "0.2.1"
 num_cpus = "1.16.0"
 byteorder = "1.5.0"
@@ -20,3 +19,4 @@ num-traits = "0.2.17"
 num-derive = "0.4.1"
 readwrite = "0.2.0"
 cfg-if = "1.0.0"
+bytesize = "1.3.0"
