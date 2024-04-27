@@ -59,6 +59,12 @@ where
         let header_path = header_path.as_ref();
         let metadata = file_path.as_ref().symlink_metadata()?;
 
+        if metadata.is_file() && File::open(&file_path).is_err() {
+            // skip this bad file
+            println!("Skip bad file: {}", file_path.as_ref().display());
+            return Ok(());
+        }
+
         let (file_type, file_size) = if metadata.is_file() {
             (FileType::RegularFile, metadata.len())
         } else if metadata.is_dir() {
