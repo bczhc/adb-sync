@@ -121,7 +121,7 @@ impl<W: Write> Drop for SendStream<W> {
 pub fn write_send_list_to_stream<P, W, F>(
     stream: &mut SendStream<W>,
     android_dir: P,
-    send_list: &[UnixPath],
+    send_list: impl ExactSizeIterator<Item = UnixPath>,
     mut callback: F,
 ) -> io::Result<()>
 where
@@ -129,14 +129,16 @@ where
     W: Write,
     F: FnMut(&Path, (usize /* index */, usize /* total */)),
 {
-    for (index, b) in send_list.iter().enumerate() {
+    let send_list_size = send_list.len();
+
+    for (index, b) in send_list.enumerate() {
         let relative_path = b.0.as_path();
         if relative_path.components().count() == 0 {
             continue;
         }
         let path = android_dir.as_ref().join(relative_path);
 
-        callback(relative_path, (index, send_list.len()));
+        callback(relative_path, (index, send_list_size));
         stream.append_file(relative_path, &path)?;
     }
     Ok(())
