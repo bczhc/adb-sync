@@ -3,7 +3,7 @@ adb-sync
 
 ## Usage
 
-> adb-sync \<android-dir\> \<dest-dir\>
+> TODO
 
 ## Build
 
@@ -26,7 +26,7 @@ adb-sync
   ```
 
 - Install Android targets using `rustup`:
-  
+
   ```shell
   rustup target add aarch64-linux-android
   ```
@@ -39,6 +39,7 @@ adb-sync
 - Run `./build-rust`
 
 ## Limitations and Notes
+
 - Relies on `mtime`s
 - No multiple files/directories and file exclusion support
 - Empty directories won't be synced
