@@ -23,10 +23,12 @@ pub fn start<S: Read + Write>(
         };
     }
 
+    println!("Start sending...");
     stream.write_all(MAGIC)?;
     stream.write_bincode(&Message::StartIndexing(send_config))?;
     check_ok!();
 
+    println!("Indexing...");
     let entries = stream.read_bincode::<Vec<Entry>>()?;
     println!(
         "Entries: {}, {}",
@@ -35,6 +37,7 @@ pub fn start<S: Read + Write>(
     );
     check_ok!();
 
+    println!("Generating send list...");
     let send_list = generate_send_list(entries, dest_dir)?;
     println!(
         "Send list: {}, {}",
@@ -44,6 +47,7 @@ pub fn start<S: Read + Write>(
     stream.write_bincode(&send_list)?;
     check_ok!();
 
+    println!("Receiving...");
     receive(&mut stream, dest_dir)?;
     check_ok!();
     println!("Done!");
