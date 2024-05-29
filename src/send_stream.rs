@@ -61,7 +61,7 @@ where
 
         if metadata.is_file() && File::open(&file_path).is_err() {
             // skip this bad file
-            println!("Skip bad file: {}", file_path.as_ref().display());
+            eprintln!("Skip bad file: {}", file_path.as_ref().display());
             return Ok(());
         }
 
