@@ -37,6 +37,7 @@ dependencies = [
  "anyhow",
  "clap",
  "pnet_datalink",
+ "readwrite",
 ]
 
 [[package]]

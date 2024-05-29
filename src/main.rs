@@ -15,13 +15,16 @@ use clap::Parser;
 use colored::Colorize;
 use log::{debug, info};
 use once_cell::sync::Lazy;
+use readwrite::ReadWrite;
 
+use adb_sync::stream::host::start;
 use adb_sync::stream::protocol::SendConfig;
+use adb_sync::stream::ReadWriteFlush;
 use adb_sync::{
     adb_command, adb_shell, adb_shell_run, android_mktemp, assert_utf8_path, configure_log,
     mutex_lock, ADB_EXE_NAME, ADB_SYNC_PORT, ANDROID_ADB_SYNC_TMP_DIR, ANDROID_CALL_NAMES,
-    ANDROID_CALL_NAME_GET_IP, ANDROID_CALL_NAME_IP_CHECKER, ANDROID_CALL_NAME_TCP_SERVER,
-    IP_CHECKER_PORT,
+    ANDROID_CALL_NAME_GET_IP, ANDROID_CALL_NAME_IP_CHECKER, ANDROID_CALL_NAME_STDIO_SERVER,
+    ANDROID_CALL_NAME_TCP_SERVER, IP_CHECKER_PORT,
 };
 
 static CONFIG: Lazy<Mutex<Option<Config>>> = Lazy::new(|| Mutex::new(None));
@@ -134,14 +137,29 @@ fn tcp_transfer(ip: IpAddr) -> anyhow::Result<()> {
 
     let tcp_stream = TcpStream::connect(SocketAddr::new(ip, ADB_SYNC_PORT))?;
 
-    adb_sync::stream::host::start(tcp_stream, config.send_config.clone(), &config.dest_path)?;
+    start(tcp_stream, config.send_config.clone(), &config.dest_path)?;
 
     android_child.join().unwrap();
     Ok(())
 }
 
 fn stdio_transfer() -> anyhow::Result<()> {
-    todo!()
+    let guard = mutex_lock!(CONFIG);
+    let config = guard.as_ref().unwrap();
+
+    let mut child = Command::new("adb")
+        .arg("shell")
+        .arg(assert_utf8_path!(
+            ANDROID_ADB_SYNC_TMP_DIR.join(ANDROID_CALL_NAME_STDIO_SERVER)
+        ))
+        .stderr(Stdio::inherit())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()?;
+    let process_stdin = child.stdin.take().unwrap();
+    let process_stdout = child.stdout.take().unwrap();
+    let stream = ReadWriteFlush(ReadWrite::new(process_stdout, process_stdin));
+    start(stream, config.send_config.clone(), &config.dest_path)
 }
 
 fn get_connectable_ip() -> anyhow::Result<Option<IpAddr>> {
