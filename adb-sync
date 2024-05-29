@@ -2,6 +2,10 @@
 
 # TODO!!
 
+# First check the device's IP. If the network is available and
+# both host and Android are in the same LAN, do TCP transferring;
+# otherwise transfer via adb shell (through stdin/stdout).
+
 exit 1
 
 set -e

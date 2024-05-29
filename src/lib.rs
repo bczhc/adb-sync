@@ -2,12 +2,14 @@
 
 use std::env::args;
 use std::io::{Read, Write};
+use std::net::{Ipv4Addr, SocketAddr};
 use std::path::Path;
 use std::time::SystemTime;
 use std::{env, io};
 
 use bincode::config::Configuration;
 use bincode::{Decode, Encode};
+use once_cell::sync::Lazy;
 
 use crate::unix_path::UnixPath;
 
@@ -15,6 +17,14 @@ pub mod crc;
 mod send_stream;
 pub mod stream;
 pub mod unix_path;
+
+pub const ADB_SYNC_PORT: u16 = 5001;
+pub const IP_CHECKER_PORT: u16 = 5002;
+pub static ANY_IPV4_ADDR: Lazy<Ipv4Addr> = Lazy::new(|| "0.0.0.0".parse().unwrap());
+
+pub fn any_ipv4_socket(port: u16) -> SocketAddr {
+    (*ANY_IPV4_ADDR, port).into()
+}
 
 #[derive(Encode, Decode)]
 pub struct Entry {

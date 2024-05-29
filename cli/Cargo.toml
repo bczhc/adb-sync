@@ -11,7 +11,20 @@ path = "src/tcp/android.rs"
 name = "tcp-host"
 path = "src/tcp/host.rs"
 
+[[bin]]
+name = "demo"
+path = "src/tcp/demo.rs"
+
+[[bin]]
+name = "ip-checker"
+path = "src/tcp/ip-checker-server.rs"
+
+[[bin]]
+name = "main"
+path = "src/tcp/multicall.rs"
+
 [dependencies]
 adb-sync = { path = ".." }
 clap = { version = "4.4.8", features = ["derive"] }
 anyhow = "1.0.82"
+pnet_datalink = "0.34.0"
