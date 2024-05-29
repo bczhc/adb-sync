@@ -65,9 +65,9 @@ pub fn main() -> anyhow::Result<()> {
     // Like rsync, if the source path ends with a slash, put all the received files
     // under a directory with the same base name as the source path.
     let real_dest_dir = if format!("{}", args.android_dir.display()).ends_with('/') {
-        args.host_dir.join(args.android_dir.file_name().unwrap())
-    } else {
         args.host_dir.clone()
+    } else {
+        args.host_dir.join(args.android_dir.file_name().unwrap())
     };
     create_dir_all(&real_dest_dir)?;
 
