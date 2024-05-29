@@ -1,10 +1,9 @@
+use adb_sync::{any_ipv4_socket, IP_CHECKER_PORT};
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
 use std::thread::spawn;
 
-use adb_sync::{any_ipv4_socket, IP_CHECKER_PORT};
-
-fn main() {
+pub fn main() -> anyhow::Result<()> {
     let interfaces = pnet_datalink::interfaces()
         .into_iter()
         .filter(|x| !x.is_loopback() && x.is_up())
@@ -30,4 +29,5 @@ fn main() {
             drop(stream);
         });
     }
+    Ok(())
 }

@@ -5,6 +5,9 @@ adb-sync
 
 > TODO
 
+The supported Android version is Android 7.0 Nougat (API Version 24) and above, because it depends on
+`ifaddrs` which is supported officially above this version.
+
 ## Build
 
 - Set up Rust with NDK toolchain

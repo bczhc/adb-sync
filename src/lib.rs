@@ -3,12 +3,15 @@
 use std::env::args;
 use std::io::{Read, Write};
 use std::net::{Ipv4Addr, SocketAddr};
-use std::path::Path;
-use std::time::SystemTime;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, io};
 
 use bincode::config::Configuration;
 use bincode::{Decode, Encode};
+use colored::Colorize;
+use fern::colors::{Color, ColoredLevelConfig};
 use once_cell::sync::Lazy;
 
 use crate::unix_path::UnixPath;
@@ -21,6 +24,25 @@ pub mod unix_path;
 pub const ADB_SYNC_PORT: u16 = 5001;
 pub const IP_CHECKER_PORT: u16 = 5002;
 pub static ANY_IPV4_ADDR: Lazy<Ipv4Addr> = Lazy::new(|| "0.0.0.0".parse().unwrap());
+
+macro_rules! count {
+    () => (0_usize);
+    ($x:expr) => (1_usize);
+    ( $x:expr, $($xs:expr),* ) => (1usize + count!($($xs),*));
+}
+
+macro_rules! const_android_call_name {
+    ($($name:tt),+ $(,)?) => {
+        $(
+            paste::paste! {
+                pub const [<ANDROID_CALL_NAME_ $name:upper>]: &str = $name;
+            }
+        )*
+        pub static ANDROID_CALL_NAMES: [&str; count![$($name),*]] = [$($name),*];
+    };
+}
+
+const_android_call_name!("ip-checker", "tcp-server", "stdio-server");
 
 pub fn any_ipv4_socket(port: u16) -> SocketAddr {
     (*ANY_IPV4_ADDR, port).into()
@@ -151,4 +173,86 @@ pub fn generate_send_list<P: AsRef<Path>>(
         }
     }
     Ok(send_list)
+}
+
+pub static ANDROID_TMP_DIR: Lazy<&Path> = Lazy::new(|| Path::new("/data/local/tmp"));
+pub static ANDROID_ADB_SYNC_TMP_DIR: Lazy<&Path> =
+    Lazy::new(|| Path::new("/data/local/tmp/adb-sync"));
+const ADB_EXE_NAME: &str = "adb";
+
+pub fn timestamp_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as u64
+}
+
+#[macro_export]
+macro_rules! assert_utf8_path {
+    ($path:expr) => {
+        $path.to_str().expect("Non-UTF8 self_path")
+    };
+}
+
+pub fn adb_command(subcommand: &str, args: &[&str]) -> io::Result<()> {
+    let status = Command::new(ADB_EXE_NAME)
+        .arg(subcommand)
+        .args(args)
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()?
+        .wait()?;
+    if !status.success() {
+        return Err(io::Error::other("Failed adb execution"));
+    }
+    Ok(())
+}
+
+pub fn adb_shell<S: AsRef<str>>(shell: S) -> io::Result<()> {
+    adb_command("shell", &[shell.as_ref()])
+}
+
+pub fn adb_shell_run(binary_name: &str, args: &[&str]) -> io::Result<()> {
+    let bin_path = ANDROID_ADB_SYNC_TMP_DIR.join(binary_name);
+    let mut joined_args = vec![assert_utf8_path!(bin_path)];
+    for &x in args {
+        joined_args.push(x);
+    }
+    adb_command("shell", &joined_args)
+}
+
+pub fn android_mktemp() -> io::Result<PathBuf> {
+    let timestamp = timestamp_ms();
+    adb_shell(format!(
+        "mkdir {0} 2>/dev/null || true && touch {0}/{1}",
+        ANDROID_ADB_SYNC_TMP_DIR.display(),
+        timestamp
+    ))?;
+    Ok(ANDROID_TMP_DIR
+        .join("adb-sync")
+        .join(format!("{}", timestamp)))
+}
+
+pub fn configure_log() -> anyhow::Result<()> {
+    let colors = ColoredLevelConfig::new()
+        // use builder methods
+        .info(Color::Green);
+
+    fern::Dispatch::new()
+        .format(move |out, message, record| {
+            out.finish(format_args!(
+                "[{} {}] {}",
+                format!("{}", humantime::format_rfc3339(SystemTime::now())).yellow(),
+                colors.color(record.level()),
+                message
+            ))
+        })
+        .level(log::LevelFilter::Info)
+        .chain(io::stderr())
+        .apply()?;
+    Ok(())
+}
+
+pub fn self_path() -> PathBuf {
+    env::args_os().next().unwrap().into()
 }

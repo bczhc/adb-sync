@@ -7,7 +7,7 @@ struct Args {
     port: u16,
 }
 
-fn main() -> anyhow::Result<()> {
+pub fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let listener = TcpListener::bind(
         format!("0.0.0.0:{}", args.port)

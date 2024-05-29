@@ -1,0 +1,10 @@
+[package]
+name = "adb-sync-android"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+adb-sync = { path = ".." }
+pnet_datalink = "0.34.0"
+clap = { version = "4.5.4", features = ["derive"] }
