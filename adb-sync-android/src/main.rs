@@ -1,10 +1,11 @@
 #![feature(try_blocks)]
 
-/// This is the main executive binary, and is aggregated (multi-call).
-use anyhow::anyhow;
 use std::env;
 use std::ffi::OsString;
 use std::path::Path;
+
+/// This is the main executive binary, and is aggregated (multi-call).
+use anyhow::anyhow;
 
 fn main() -> anyhow::Result<()> {
     let binary_name: Option<OsString> = try {
@@ -19,6 +20,7 @@ fn main() -> anyhow::Result<()> {
             Some(adb_sync::ANDROID_CALL_NAME_STDIO_SERVER) => {
                 adb_sync_android::stdio_server::main()
             }
+            Some(adb_sync::ANDROID_CALL_NAME_GET_IP) => adb_sync_android::get_ip::main(),
             Some(other) => Err(anyhow!("Invalid binary name: {}", other)),
             None => Err(anyhow!("Invalid binary name")),
         },

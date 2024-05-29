@@ -42,7 +42,7 @@ macro_rules! const_android_call_name {
     };
 }
 
-const_android_call_name!("ip-checker", "tcp-server", "stdio-server");
+const_android_call_name!("ip-checker", "tcp-server", "stdio-server", "get-ip");
 
 pub fn any_ipv4_socket(port: u16) -> SocketAddr {
     (*ANY_IPV4_ADDR, port).into()
@@ -178,7 +178,7 @@ pub fn generate_send_list<P: AsRef<Path>>(
 pub static ANDROID_TMP_DIR: Lazy<&Path> = Lazy::new(|| Path::new("/data/local/tmp"));
 pub static ANDROID_ADB_SYNC_TMP_DIR: Lazy<&Path> =
     Lazy::new(|| Path::new("/data/local/tmp/adb-sync"));
-const ADB_EXE_NAME: &str = "adb";
+pub const ADB_EXE_NAME: &str = "adb";
 
 pub fn timestamp_ms() -> u64 {
     SystemTime::now()
@@ -198,6 +198,7 @@ pub fn adb_command(subcommand: &str, args: &[&str]) -> io::Result<()> {
     let status = Command::new(ADB_EXE_NAME)
         .arg(subcommand)
         .args(args)
+        .stdin(Stdio::null())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn()?
@@ -247,7 +248,7 @@ pub fn configure_log() -> anyhow::Result<()> {
                 message
             ))
         })
-        .level(log::LevelFilter::Info)
+        .level(log::LevelFilter::Debug)
         .chain(io::stderr())
         .apply()?;
     Ok(())
