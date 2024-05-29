@@ -4,6 +4,8 @@ use std::path::Path;
 
 use anyhow::anyhow;
 use bytesize::ByteSize;
+use colored::Colorize;
+use log::info;
 
 use crate::send_stream::receive;
 use crate::stream::protocol::{Message, SendConfig, MAGIC};
@@ -23,34 +25,44 @@ pub fn start<S: Read + Write>(
         };
     }
 
-    println!("Start sending...");
+    info!("{}", "Start sending...".cyan().bold());
     stream.write_all(MAGIC)?;
     stream.write_bincode(&Message::StartIndexing(send_config))?;
     check_ok!();
 
-    println!("Indexing...");
+    info!("{}", "Indexing...".cyan().bold());
     let entries = stream.read_bincode::<Vec<Entry>>()?;
-    println!(
-        "Entries: {}, {}",
-        entries.len(),
-        ByteSize(entries.iter().map(|x| x.size).sum::<u64>()).to_string_as(true)
+    info!(
+        "{}",
+        format!(
+            "Entries: {}, {}",
+            entries.len(),
+            ByteSize(entries.iter().map(|x| x.size).sum::<u64>()).to_string_as(true)
+        )
+        .cyan()
+        .bold()
     );
     check_ok!();
 
-    println!("Generating send list...");
+    info!("{}", "Generating send list...".cyan().bold());
     let send_list = generate_send_list(entries, dest_dir)?;
-    println!(
-        "Send list: {}, {}",
-        send_list.len(),
-        ByteSize(send_list.iter().map(|x| x.size).sum::<u64>()).to_string_as(true)
+    info!(
+        "{}",
+        format!(
+            "Send list: {}, {}",
+            send_list.len(),
+            ByteSize(send_list.iter().map(|x| x.size).sum::<u64>()).to_string_as(true)
+        )
+        .cyan()
+        .bold()
     );
     stream.write_bincode(&send_list)?;
     check_ok!();
 
-    println!("Receiving...");
+    info!("{}", "Receiving...".cyan().bold());
     receive(&mut stream, dest_dir)?;
     check_ok!();
-    println!("Done!");
+    info!("{}", "Done!".cyan().bold());
 
     Ok(())
 }

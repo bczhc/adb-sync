@@ -1,24 +1,36 @@
 #![feature(try_blocks)]
 
+use std::fs::create_dir_all;
 use std::io;
 use std::io::{Read, Write};
 use std::net::{IpAddr, SocketAddr, TcpStream};
 use std::os::linux::raw::stat;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::thread::spawn;
+use std::sync::Mutex;
+use std::thread::{sleep, spawn};
 use std::time::Duration;
 
 use anyhow::anyhow;
 use clap::Parser;
 use colored::Colorize;
 use log::{debug, info};
+use once_cell::sync::Lazy;
 
+use adb_sync::stream::protocol::SendConfig;
 use adb_sync::{
     adb_command, adb_shell, adb_shell_run, android_mktemp, assert_utf8_path, configure_log,
-    ADB_EXE_NAME, ANDROID_ADB_SYNC_TMP_DIR, ANDROID_CALL_NAMES, ANDROID_CALL_NAME_GET_IP,
-    ANDROID_CALL_NAME_IP_CHECKER, IP_CHECKER_PORT,
+    mutex_lock, ADB_EXE_NAME, ADB_SYNC_PORT, ANDROID_ADB_SYNC_TMP_DIR, ANDROID_CALL_NAMES,
+    ANDROID_CALL_NAME_GET_IP, ANDROID_CALL_NAME_IP_CHECKER, ANDROID_CALL_NAME_TCP_SERVER,
+    IP_CHECKER_PORT,
 };
+
+static CONFIG: Lazy<Mutex<Option<Config>>> = Lazy::new(|| Mutex::new(None));
+
+pub struct Config {
+    send_config: SendConfig,
+    dest_path: PathBuf,
+}
 
 const ANDROID_BIN_NAME: &str = "adb-sync-android";
 
@@ -36,6 +48,26 @@ pub fn main() -> anyhow::Result<()> {
     configure_log()?;
     let args = Args::parse();
 
+    // Like rsync, if the source path ends with a slash, put all the received files
+    // under a directory with the same base name as the source path.
+    let real_dest_dir = if format!("{}", args.android_dir.display()).ends_with('/') {
+        args.host_dir.join(args.android_dir.file_name().unwrap())
+    } else {
+        args.host_dir.clone()
+    };
+    create_dir_all(&real_dest_dir)?;
+
+    info!("Source path: {}", args.android_dir.display());
+    info!("Destination path: {}", args.host_dir.display());
+    info!("Receive files at: {}", real_dest_dir.display());
+
+    mutex_lock!(CONFIG).replace(Config {
+        send_config: SendConfig {
+            path: args.android_dir,
+        },
+        dest_path: real_dest_dir,
+    });
+
     let android_binary = args.android_bin_search_path.join(ANDROID_BIN_NAME);
     if !android_binary.exists() {
         return Err(anyhow!(
@@ -48,9 +80,39 @@ pub fn main() -> anyhow::Result<()> {
     prepare_android_binaries(android_binary)?;
 
     let android_ip = get_connectable_ip()?;
-    println!("{:?}", android_ip);
+    match android_ip {
+        None => {
+            info!("Transfer via stdio");
+            stdio_transfer()?;
+        }
+        Some(ip) => {
+            info!("Transfer via TCP");
+            info!("Use Android IP: {}", ip);
+            tcp_transfer(ip)?;
+        }
+    }
 
     Ok(())
+}
+
+fn tcp_transfer(ip: IpAddr) -> anyhow::Result<()> {
+    let android_child = spawn(|| {
+        adb_shell_run(ANDROID_CALL_NAME_TCP_SERVER, &[]).unwrap();
+    });
+    sleep(Duration::from_secs(1));
+    let guard = mutex_lock!(CONFIG);
+    let config = guard.as_ref().unwrap();
+
+    let tcp_stream = TcpStream::connect(SocketAddr::new(ip, ADB_SYNC_PORT))?;
+
+    adb_sync::stream::host::start(tcp_stream, config.send_config.clone(), &config.dest_path)?;
+
+    android_child.join().unwrap();
+    Ok(())
+}
+
+fn stdio_transfer() -> anyhow::Result<()> {
+    todo!()
 }
 
 fn get_connectable_ip() -> anyhow::Result<Option<IpAddr>> {
@@ -73,7 +135,7 @@ fn get_connectable_ip() -> anyhow::Result<Option<IpAddr>> {
     spawn(|| {
         adb_shell_run(ANDROID_CALL_NAME_IP_CHECKER, &[]).unwrap();
     });
-
+    sleep(Duration::from_secs(1));
     let ips = output.lines().filter(|x| !x.is_empty()).collect::<Vec<_>>();
     Ok(check_connectivity(&ips))
 }
@@ -123,7 +185,6 @@ pub fn prepare_android_binaries<P: AsRef<Path>>(android_binary: P) -> anyhow::Re
             assert_utf8_path!(android_tmp_binary),
         ],
     )?;
-    println!("{:?}", android_tmp_binary);
 
     info!("{}", "Derive multi-calls via symlinks");
     for name in ANDROID_CALL_NAMES {

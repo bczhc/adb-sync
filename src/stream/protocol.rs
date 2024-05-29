@@ -12,7 +12,7 @@ pub enum Message {
     StartIndexing(SendConfig),
 }
 
-#[derive(Encode, Decode, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 pub struct SendConfig {
     pub path: PathBuf,
 }
