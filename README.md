@@ -3,10 +3,8 @@ adb-sync
 
 ## Usage
 
-> TODO
-
-The supported Android version is Android 7.0 Nougat (API Version 24) and above, because it depends on
-`ifaddrs` which is supported officially above this version.
+Note: The supported Android version is Android 7.0 Nougat (API Version 24) and above, because it depends on
+`ifaddrs` which is supported officially only above this version.
 
 ## Build
 
@@ -17,8 +15,6 @@ The supported Android version is Android 7.0 Nougat (API Version 24) and above, 
   # <project>/.cargo/config
   
   [build]
-  #target = "aarch64-linux-android"
-  
   [target.aarch64-linux-android]
   linker = "/home/bczhc/bin/AndroidSdk/ndk-ln/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android29-clang"
   ar = "/home/bczhc/bin/AndroidSdk/ndk-ln/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
@@ -40,6 +36,14 @@ The supported Android version is Android 7.0 Nougat (API Version 24) and above, 
     - i686-linux-android
     - x86_64-linux-android
 - Run `./build-rust`
+
+### Run
+
+After `./build-rust`, run:
+
+```bash
+./adb-sync
+```
 
 ## Limitations and Notes
 
