@@ -42,6 +42,12 @@ pub struct Args {
     pub host_dir: PathBuf,
     #[arg(default_value = clap_leaked_self_dirname(), long, alias = "absp")]
     pub android_bin_search_path: PathBuf,
+    /// Do not fall back to the stdio method when Android IP is unavailable.
+    #[arg(conflicts_with = "no_tcp", long, alias = "ns")]
+    pub no_stdio: bool,
+    /// Use stdio only.
+    #[arg(conflicts_with = "no_stdio", long, alias = "nt")]
+    pub no_tcp: bool,
 }
 
 pub fn clap_leaked_self_dirname() -> &'static OsStr {
@@ -87,11 +93,22 @@ pub fn main() -> anyhow::Result<()> {
     info!("{}", "Preparing Android binaries...".cyan().bold());
     prepare_android_binaries(android_binary)?;
 
-    let android_ip = get_connectable_ip()?;
+    let android_ip = if args.no_tcp {
+        None
+    } else {
+        get_connectable_ip()?
+    };
+
     match android_ip {
         None => {
-            info!("Transfer via stdio");
-            stdio_transfer()?;
+            if args.no_stdio {
+                info!("Transfer via stdio");
+                stdio_transfer()?;
+            } else {
+                return Err(anyhow!(
+                    "no_stdio is enabled. Won't fall back to this method."
+                ));
+            }
         }
         Some(ip) => {
             info!("Transfer via TCP");
