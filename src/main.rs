@@ -2,7 +2,6 @@
 
 use std::ffi::OsStr;
 use std::fs::create_dir_all;
-use std::io;
 use std::io::{Read, Write};
 use std::net::{IpAddr, SocketAddr, TcpStream};
 use std::path::{Path, PathBuf};
@@ -43,10 +42,15 @@ pub struct Args {
     #[arg(default_value = clap_leaked_self_dirname(), long, alias = "absp")]
     pub android_bin_search_path: PathBuf,
     /// Do not fall back to the stdio method when Android IP is unavailable.
-    #[arg(conflicts_with = "no_tcp", long, alias = "ns")]
+    #[arg(conflicts_with = "no_tcp", long, alias = "ns", default_value = "false")]
     pub no_stdio: bool,
     /// Use stdio only.
-    #[arg(conflicts_with = "no_stdio", long, alias = "nt")]
+    #[arg(
+        conflicts_with = "no_stdio",
+        long,
+        alias = "nt",
+        default_value = "false"
+    )]
     pub no_tcp: bool,
 }
 
@@ -102,12 +106,12 @@ pub fn main() -> anyhow::Result<()> {
     match android_ip {
         None => {
             if args.no_stdio {
-                info!("Transfer via stdio");
-                stdio_transfer()?;
-            } else {
                 return Err(anyhow!(
                     "no_stdio is enabled. Won't fall back to this method."
                 ));
+            } else {
+                info!("Transfer via stdio");
+                stdio_transfer()?;
             }
         }
         Some(ip) => {
