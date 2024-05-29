@@ -1,10 +1,10 @@
 #![feature(try_blocks)]
 
+use std::ffi::OsStr;
 use std::fs::create_dir_all;
 use std::io;
 use std::io::{Read, Write};
 use std::net::{IpAddr, SocketAddr, TcpStream};
-use std::os::linux::raw::stat;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::Mutex;
@@ -40,8 +40,16 @@ pub struct Args {
     pub android_dir: PathBuf,
     /// Path of the destination directory
     pub host_dir: PathBuf,
-    #[arg(default_value = ".", long, alias = "absp")]
+    #[arg(default_value = clap_leaked_self_dirname(), long, alias = "absp")]
     pub android_bin_search_path: PathBuf,
+}
+
+pub fn clap_leaked_self_dirname() -> &'static OsStr {
+    Box::leak(
+        adb_sync::self_dirname()
+            .into_os_string()
+            .into_boxed_os_str(),
+    )
 }
 
 pub fn main() -> anyhow::Result<()> {

@@ -1,7 +1,13 @@
 #!/bin/bash
 
+set -e
+
 flag=-r
 android_target=aarch64-linux-android
+android_bin_name=adb-sync-android
 
-RUSTFLAGS="-C link-arg=-s" cargo build $flag --manifest-path=adb-sync-android/Cargo.toml --target "$android_target"
-RUSTFLAGS="-C link-arg=-s" cargo build $flag
+RUSTFLAGS="-C link-arg=-s" cargo build $flag --manifest-path=adb-sync-android/Cargo.toml --target "$android_target" --bin "$android_bin_name"
+RUSTFLAGS="-C link-arg=-s" cargo build $flag --bin adb-sync
+
+cd target/release
+ln -sf ../"$android_target"/release/"$android_bin_name" .

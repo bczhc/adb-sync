@@ -258,6 +258,12 @@ pub fn self_path() -> PathBuf {
     env::args_os().next().unwrap().into()
 }
 
+pub fn self_dirname() -> PathBuf {
+    let mut buf = self_path();
+    assert!(buf.pop());
+    buf
+}
+
 #[macro_export]
 macro_rules! mutex_lock {
     ($e:expr) => {
