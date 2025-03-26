@@ -27,6 +27,7 @@ dependencies = [
  "pathdiff",
  "readwrite",
  "shell-words",
+ "yeet-ops",
 ]
 
 [[package]]
@@ -846,3 +847,9 @@ name = "windows_x86_64_msvc"
 version = "0.52.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bec47e5bfd1bff0eeaf6d8b485cc1074891a197ab4225d504cb7a1ab88b02bf0"
+
+[[package]]
+name = "yeet-ops"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c90a74b94f44d3bc3642755bf17269717583129578d5d82c7f66d69e2d477267"

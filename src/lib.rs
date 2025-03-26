@@ -1,20 +1,19 @@
 #![feature(try_blocks)]
+#![feature(yeet_expr)]
 
-use std::env::args;
-use std::io::{Read, Write};
-use std::net::{Ipv4Addr, SocketAddr};
-use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::{env, io};
-
+use crate::unix_path::UnixPath;
 use bincode::config::Configuration;
 use bincode::{Decode, Encode};
 use colored::Colorize;
 use fern::colors::{Color, ColoredLevelConfig};
 use once_cell::sync::Lazy;
-
-use crate::unix_path::UnixPath;
+use std::env::args;
+use std::io::Read;
+use std::net::{Ipv4Addr, SocketAddr};
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::{env, io};
 
 pub mod crc;
 mod send_stream;
@@ -48,7 +47,7 @@ pub fn any_ipv4_socket(port: u16) -> SocketAddr {
     (*ANY_IPV4_ADDR, port).into()
 }
 
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Debug)]
 pub struct Entry {
     pub path: UnixPath,
     pub size: u64,

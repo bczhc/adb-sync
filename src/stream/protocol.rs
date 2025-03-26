@@ -15,6 +15,8 @@ pub enum Message {
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 pub struct SendConfig {
     pub path: PathBuf,
+    /// Skip failures while indexing
+    pub skip_failed: bool,
 }
 
 pub const MAGIC: &[u8; 11] = b"sync-stream";

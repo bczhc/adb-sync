@@ -55,6 +55,9 @@ pub struct Args {
         default_value = "false"
     )]
     pub no_tcp: bool,
+    /// Skip indexing failure
+    #[arg(default_value = "false", long, alias = "sf")]
+    pub skip_failed: bool,
 }
 
 pub fn clap_leaked_self_dirname() -> &'static OsStr {
@@ -85,6 +88,7 @@ pub fn main() -> anyhow::Result<()> {
     mutex_lock!(CONFIG).replace(Config {
         send_config: SendConfig {
             path: args.android_dir,
+            skip_failed: args.skip_failed,
         },
         dest_path: real_dest_dir,
     });

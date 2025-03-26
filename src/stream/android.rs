@@ -29,7 +29,7 @@ pub fn handle_connection<S: Read + Write>(mut stream: S) -> anyhow::Result<()> {
     }
     send_ok!();
 
-    let entries = index_dir(&send_config.path, true)?;
+    let entries = index_dir(&send_config.path, send_config.skip_failed)?;
     stream.write_bincode(&entries)?;
     send_ok!();
 

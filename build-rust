@@ -11,3 +11,4 @@ RUSTFLAGS="-C link-arg=-s" cargo build $flag --bin adb-sync
 
 cd target/release
 ln -sf ../"$android_target"/release/"$android_bin_name" .
+echo Done.
