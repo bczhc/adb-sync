@@ -22,9 +22,9 @@ use adb_sync::stream::protocol::SendConfig;
 use adb_sync::stream::ReadWriteFlush;
 use adb_sync::{
     adb_command, adb_shell, adb_shell_run, android_mktemp, assert_utf8_path, configure_log,
-    mutex_lock, ADB_EXE_NAME, ADB_SYNC_PORT, ANDROID_ADB_SYNC_TMP_DIR, ANDROID_CALL_NAMES,
-    ANDROID_CALL_NAME_GET_IP, ANDROID_CALL_NAME_IP_CHECKER, ANDROID_CALL_NAME_STDIO_SERVER,
-    ANDROID_CALL_NAME_TCP_SERVER, IP_CHECKER_PORT,
+    mutex_lock, self_dirname, ADB_EXE_NAME, ADB_SYNC_PORT, ANDROID_ADB_SYNC_TMP_DIR,
+    ANDROID_CALL_NAMES, ANDROID_CALL_NAME_GET_IP, ANDROID_CALL_NAME_IP_CHECKER,
+    ANDROID_CALL_NAME_STDIO_SERVER, ANDROID_CALL_NAME_TCP_SERVER, IP_CHECKER_PORT,
 };
 
 static CONFIG: Lazy<Mutex<Option<Config>>> = Lazy::new(|| Mutex::new(None));
@@ -42,7 +42,8 @@ pub struct Args {
     pub android_dir: PathBuf,
     /// Path of the destination directory
     pub host_dir: PathBuf,
-    #[arg(default_value = clap_leaked_self_dirname(), long, alias = "absp")]
+    /// Search `adb-sync-android` in this path. Default to where `adb-sync` locates.
+    #[arg(default_value = ".", long, alias = "absp")]
     pub android_bin_search_path: PathBuf,
     /// Do not fall back to the stdio method when Android IP is unavailable.
     #[arg(conflicts_with = "no_tcp", long, alias = "ns", default_value = "false")]
@@ -58,14 +59,6 @@ pub struct Args {
     /// Skip indexing failure
     #[arg(default_value = "false", long, alias = "sf")]
     pub skip_failed: bool,
-}
-
-pub fn clap_leaked_self_dirname() -> &'static OsStr {
-    Box::leak(
-        adb_sync::self_dirname()
-            .into_os_string()
-            .into_boxed_os_str(),
-    )
 }
 
 pub fn main() -> anyhow::Result<()> {
@@ -93,7 +86,14 @@ pub fn main() -> anyhow::Result<()> {
         dest_path: real_dest_dir,
     });
 
-    let android_binary = args.android_bin_search_path.join(ANDROID_BIN_NAME);
+    let android_binary = {
+        let sp = args.android_bin_search_path;
+        if sp.is_relative() {
+            self_dirname().join(sp).join(ANDROID_BIN_NAME)
+        } else {
+            sp.join(ANDROID_BIN_NAME)
+        }
+    };
     if !android_binary.exists() {
         return Err(anyhow!(
             "Android binary doesn't exist: {}",
