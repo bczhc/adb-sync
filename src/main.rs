@@ -1,6 +1,5 @@
 #![feature(try_blocks)]
 
-use std::ffi::OsStr;
 use std::fs::create_dir_all;
 use std::io::{Read, Write};
 use std::net::{IpAddr, SocketAddr, TcpStream};
@@ -59,6 +58,11 @@ pub struct Args {
     /// Skip indexing failure
     #[arg(default_value = "false", long, alias = "sf")]
     pub skip_failed: bool,
+    /// Manually specify the Android IP instead of automatic detection.
+    ///
+    /// Only used in TCP mode.
+    #[arg(long)]
+    pub android_ip: Option<String>,
 }
 
 pub fn main() -> anyhow::Result<()> {
@@ -107,7 +111,10 @@ pub fn main() -> anyhow::Result<()> {
     let android_ip = if args.no_tcp {
         None
     } else {
-        get_connectable_ip()?
+        match args.android_ip {
+            None => get_connectable_ip()?,
+            Some(ip) => Some(ip.parse::<IpAddr>()?),
+        }
     };
 
     match android_ip {
