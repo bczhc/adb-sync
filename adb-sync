@@ -4,4 +4,4 @@ set -e
 
 dirname="$(dirname "$0")"
 
-"$dirname"/target/release/adb-sync "$@"
+"$dirname"/target/dist/adb-sync "$@"

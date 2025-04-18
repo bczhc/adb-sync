@@ -4,11 +4,16 @@ set -e
 
 flag=-r
 android_target=aarch64-linux-android
+host_target=x86_64-unknown-linux-musl
 android_bin_name=adb-sync-android
+host_bin_name=adb-sync
 
 RUSTFLAGS="-C link-arg=-s" cargo build $flag --manifest-path=adb-sync-android/Cargo.toml --target "$android_target" --bin "$android_bin_name"
-RUSTFLAGS="-C link-arg=-s" cargo build $flag --bin adb-sync
+RUSTFLAGS="-C link-arg=-s" cargo build $flag --bin adb-sync --target "$host_target"
 
-cd target/release
-ln -sf ../"$android_target"/release/"$android_bin_name" .
+mkdir -p target/dist
+cd target/dist
+cp -v ../"$android_target"/release/"$android_bin_name" .
+cp -v ../"$host_target"/release/"$host_bin_name" .
+cd ../..
 echo Done.

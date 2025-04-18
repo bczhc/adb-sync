@@ -260,7 +260,7 @@ pub fn self_path() -> PathBuf {
 pub fn self_dirname() -> PathBuf {
     let mut buf = self_path();
     assert!(buf.pop());
-    buf
+    buf.canonicalize().expect("Can canonicalize path")
 }
 
 #[macro_export]
