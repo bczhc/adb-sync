@@ -16,14 +16,14 @@ use log::{debug, info};
 use once_cell::sync::Lazy;
 use readwrite::ReadWrite;
 
+use adb_sync::stream::ReadWriteFlush;
 use adb_sync::stream::host::start;
 use adb_sync::stream::protocol::SendConfig;
-use adb_sync::stream::ReadWriteFlush;
 use adb_sync::{
-    adb_command, adb_shell, adb_shell_run, android_mktemp, assert_utf8_path, configure_log,
-    mutex_lock, self_dirname, ADB_EXE_NAME, ADB_SYNC_PORT, ANDROID_ADB_SYNC_TMP_DIR,
-    ANDROID_CALL_NAMES, ANDROID_CALL_NAME_GET_IP, ANDROID_CALL_NAME_IP_CHECKER,
-    ANDROID_CALL_NAME_STDIO_SERVER, ANDROID_CALL_NAME_TCP_SERVER, IP_CHECKER_PORT,
+    ADB_EXE_NAME, ADB_SYNC_PORT, ANDROID_ADB_SYNC_TMP_DIR, ANDROID_CALL_NAME_GET_IP,
+    ANDROID_CALL_NAME_IP_CHECKER, ANDROID_CALL_NAME_STDIO_SERVER, ANDROID_CALL_NAME_TCP_SERVER,
+    ANDROID_CALL_NAMES, IP_CHECKER_PORT, adb_command, adb_shell, adb_shell_run, android_mktemp,
+    assert_utf8_path, configure_log, mutex_lock, self_dirname,
 };
 
 static CONFIG: Lazy<Mutex<Option<Config>>> = Lazy::new(|| Mutex::new(None));

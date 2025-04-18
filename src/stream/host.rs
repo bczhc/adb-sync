@@ -8,9 +8,9 @@ use colored::Colorize;
 use log::info;
 
 use crate::send_stream::receive;
-use crate::stream::protocol::{Message, SendConfig, MAGIC};
+use crate::stream::protocol::{MAGIC, Message, SendConfig};
 use crate::stream::{ReadBincode, WriteBincode};
-use crate::{generate_send_list, Entry};
+use crate::{Entry, generate_send_list};
 
 pub fn start<S: Read + Write>(
     mut stream: S,
@@ -27,7 +27,7 @@ pub fn start<S: Read + Write>(
 
     info!("{}", "Start sending...".cyan().bold());
     stream.write_all(MAGIC)?;
-    stream.write_bincode(&Message::StartIndexing(send_config))?;
+    stream.write_bincode(Message::StartIndexing(send_config))?;
     check_ok!();
 
     info!("{}", "Indexing...".cyan().bold());

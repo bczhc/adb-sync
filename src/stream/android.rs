@@ -2,10 +2,10 @@ use std::io::{Read, Write};
 
 use anyhow::anyhow;
 
-use crate::send_stream::{write_send_list_to_stream, SendStream};
-use crate::stream::protocol::{Message, SendConfig, MAGIC};
+use crate::send_stream::{SendStream, write_send_list_to_stream};
+use crate::stream::protocol::{MAGIC, Message, SendConfig};
 use crate::stream::{ReadBincode, WriteBincode};
-use crate::{index_dir, Entry};
+use crate::{Entry, index_dir};
 
 pub fn handle_connection<S: Read + Write>(mut stream: S) -> anyhow::Result<()> {
     let mut magic_buf = [0_u8; MAGIC.len()];

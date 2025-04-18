@@ -7,13 +7,13 @@ use std::{fs, io};
 use ::crc as crc_lib;
 use anyhow::anyhow;
 use bincode::{Decode, Encode};
-use byteorder::{ReadBytesExt, WriteBytesExt, LE};
+use byteorder::{LE, ReadBytesExt, WriteBytesExt};
 use filetime::FileTime;
 
 use crate::crc;
 use crate::crc::write::CrcFilter;
 use crate::unix_path::UnixPath;
-use crate::{bincode_config, TryReadExact};
+use crate::{TryReadExact, bincode_config};
 
 #[derive(Encode, Decode)]
 pub struct Header {

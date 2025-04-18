@@ -63,7 +63,10 @@ pub fn bincode_config() -> Configuration {
 }
 
 pub fn enable_backtrace() {
-    env::set_var("RUST_BACKTRACE", "1");
+    // SAFETY: in a single-threaded case
+    unsafe {
+        env::set_var("RUST_BACKTRACE", "1");
+    }
 }
 
 pub trait TryReadExact {
