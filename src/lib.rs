@@ -7,7 +7,7 @@ use bincode::{Decode, Encode};
 use colored::Colorize;
 use fern::colors::{Color, ColoredLevelConfig};
 use once_cell::sync::Lazy;
-use std::env::args;
+use std::env::{args, current_exe};
 use std::io::Read;
 use std::net::{Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
@@ -256,14 +256,13 @@ pub fn configure_log() -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn self_path() -> PathBuf {
-    env::args_os().next().unwrap().into()
-}
-
 pub fn self_dirname() -> PathBuf {
-    let mut buf = self_path();
+    let mut buf = current_exe()
+        .expect("Can't get path of the current executable")
+        .canonicalize()
+        .expect("Can't canonicalize path");
     assert!(buf.pop());
-    buf.canonicalize().expect("Can canonicalize path")
+    buf
 }
 
 #[macro_export]
