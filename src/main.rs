@@ -5,7 +5,6 @@ use std::io::{Read, Write};
 use std::net::{IpAddr, SocketAddr, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::sync::Mutex;
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
@@ -13,7 +12,6 @@ use anyhow::anyhow;
 use clap::Parser;
 use colored::Colorize;
 use log::{debug, info};
-use once_cell::sync::Lazy;
 use readwrite::ReadWrite;
 
 use adb_sync::stream::ReadWriteFlush;
@@ -22,16 +20,9 @@ use adb_sync::stream::protocol::SendConfig;
 use adb_sync::{
     ADB_EXE_NAME, ADB_SYNC_PORT, ANDROID_ADB_SYNC_TMP_DIR, ANDROID_CALL_NAME_GET_IP,
     ANDROID_CALL_NAME_IP_CHECKER, ANDROID_CALL_NAME_STDIO_SERVER, ANDROID_CALL_NAME_TCP_SERVER,
-    ANDROID_CALL_NAMES, IP_CHECKER_PORT, adb_command, adb_shell, adb_shell_run, android_mktemp,
-    assert_utf8_path, configure_log, mutex_lock, self_dirname,
+    ANDROID_CALL_NAMES, CONFIG, Config, IP_CHECKER_PORT, adb_command, adb_shell, adb_shell_run,
+    android_mktemp, assert_utf8_path, configure_log, mutex_lock, self_dirname,
 };
-
-static CONFIG: Lazy<Mutex<Option<Config>>> = Lazy::new(|| Mutex::new(None));
-
-pub struct Config {
-    send_config: SendConfig,
-    dest_path: PathBuf,
-}
 
 const ANDROID_BIN_NAME: &str = "adb-sync-android";
 
@@ -63,6 +54,11 @@ pub struct Args {
     /// Only used in TCP mode.
     #[arg(long)]
     pub android_ip: Option<String>,
+    /// Ignore modification time.
+    ///
+    /// Generate send list only by path and size.
+    #[arg(long, alias = "im")]
+    pub ignore_mtime: bool,
 }
 
 pub fn main() -> anyhow::Result<()> {
@@ -88,6 +84,7 @@ pub fn main() -> anyhow::Result<()> {
             skip_failed: args.skip_failed,
         },
         dest_path: real_dest_dir,
+        ignore_mtime: args.ignore_mtime,
     });
 
     let android_binary = {
@@ -143,8 +140,7 @@ fn tcp_transfer(ip: IpAddr) -> anyhow::Result<()> {
         adb_shell_run(ANDROID_CALL_NAME_TCP_SERVER, &[]).unwrap();
     });
     sleep(Duration::from_secs(1));
-    let guard = mutex_lock!(CONFIG);
-    let config = guard.as_ref().unwrap();
+    let config = mutex_lock!(CONFIG).clone().unwrap();
 
     let tcp_stream = TcpStream::connect(SocketAddr::new(ip, ADB_SYNC_PORT))?;
 
@@ -155,8 +151,7 @@ fn tcp_transfer(ip: IpAddr) -> anyhow::Result<()> {
 }
 
 fn stdio_transfer() -> anyhow::Result<()> {
-    let guard = mutex_lock!(CONFIG);
-    let config = guard.as_ref().unwrap();
+    let config = mutex_lock!(CONFIG).clone().unwrap();
 
     let mut child = Command::new("adb")
         .arg("shell")

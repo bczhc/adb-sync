@@ -1,6 +1,7 @@
 #![feature(try_blocks)]
 #![feature(yeet_expr)]
 
+use crate::stream::protocol::SendConfig;
 use crate::unix_path::UnixPath;
 use bincode::config::Configuration;
 use bincode::{Decode, Encode};
@@ -12,6 +13,7 @@ use std::io::Read;
 use std::net::{Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, io};
 
@@ -23,6 +25,15 @@ pub mod unix_path;
 pub const ADB_SYNC_PORT: u16 = 5001;
 pub const IP_CHECKER_PORT: u16 = 5002;
 pub static ANY_IPV4_ADDR: Lazy<Ipv4Addr> = Lazy::new(|| "0.0.0.0".parse().unwrap());
+
+pub static CONFIG: Lazy<Mutex<Option<Config>>> = Lazy::new(|| Mutex::new(None));
+
+#[derive(Debug, Clone)]
+pub struct Config {
+    pub send_config: SendConfig,
+    pub dest_path: PathBuf,
+    pub ignore_mtime: bool,
+}
 
 macro_rules! count {
     () => (0_usize);
@@ -150,6 +161,8 @@ pub fn generate_send_list<P: AsRef<Path>>(
     entries: Vec<Entry>,
     dest_dir: P,
 ) -> io::Result<Vec<Entry>> {
+    let ignore_mtime = mutex_lock!(CONFIG).as_ref().unwrap().ignore_mtime;
+
     let mut send_list = Vec::new();
     for e in entries {
         let path = &e.path.0;
@@ -164,7 +177,7 @@ pub fn generate_send_list<P: AsRef<Path>>(
                 return Ok(true);
             }
 
-            if metadata.modified()? != e.modified {
+            if !ignore_mtime && metadata.modified()? != e.modified {
                 return Ok(true);
             }
 
